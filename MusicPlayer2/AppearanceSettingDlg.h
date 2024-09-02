@@ -1,6 +1,4 @@
 ﻿#pragma once
-#include "afxcmn.h"
-#include "afxwin.h"
 #include "Common.h"
 #include "DrawCommon.h"
 #include "ColorStatic.h"
@@ -46,6 +44,7 @@ protected:
     CColorStatic m_color_static4;
     CColorStatic m_color_static5;
     CColorStatic m_color_static6;
+    CColorStatic m_color_static7;
 
     const COLORREF m_color1{ RGB(134,186,249) };		//天蓝色
     const COLORREF m_color2{ RGB(115,210,45) };			//绿色
@@ -53,6 +52,7 @@ protected:
     const COLORREF m_color4{ RGB(33,147,167) };			//青绿色
     const COLORREF m_color5{ RGB(249,153,197) };		//浅红色
     const COLORREF m_color6{ RGB(162,161,216) };		//淡紫色
+    const COLORREF m_color7{ RGB(110,110,110) };		//灰色
 
     CToolTipCtrl m_toolTip;
 
@@ -78,12 +78,19 @@ protected:
     CButton m_btn_round_corners_chk;
 
     CRect m_notify_icon_preview;
-    CBitmap m_preview_dark;
-    CBitmap m_preview_light;
+    CRect m_system_titlebar_preview_rect;
+    CRect m_owner_draw_titlebar_preview_rect;
+
+    CImage m_preview_dark;
+    CImage m_preview_light;
+    CImage m_preview_system_titlebar;
+    CImage m_preview_owner_draw_titlebar;
 
     CBrowseEdit m_default_background_edit;
     CBrowseEdit m_album_cover_name_edit;
+    CBrowseEdit m_album_cover_path_edit;
 
+    virtual bool InitializeControls() override;
     virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
     void SetTransparency();
@@ -92,7 +99,10 @@ protected:
     static int SpectrumHeightRChg(int value);		//使用二次函数将0~100范围内的值映射到10~300范围内
 
     void SetControlEnable();
-    void CalculateNotifyIconPreviewRect();
+    void CalculatePreviewBitmapRect();
+
+    virtual void GetDataFromUi() override;
+    virtual void ApplyDataToUi() override;
 
     DECLARE_MESSAGE_MAP()
 public:
@@ -106,17 +116,14 @@ public:
     afx_msg void OnStnClickedColorStatic5();
     afx_msg void OnStnClickedColorStatic6();
     afx_msg void OnStnClickedColorStatic7();
+    afx_msg void OnStnClickedColorStatic8();
     virtual BOOL PreTranslateMessage(MSG* pMsg);
     afx_msg void OnBnClickedFollowSystemColorCheck();
-    virtual void OnCancel();
-    virtual void OnOK();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg void OnBnClickedShowAlbumCoverCheck();
     afx_msg void OnCbnSelchangeAlbumFitCombo();
     afx_msg void OnBnClickedAlbumCoverBackgroundCheck();
     afx_msg void OnBnClickedShowSpectrumCheck();
     afx_msg void OnBnClickedUseOutImageCheck();
-    afx_msg void OnEnChangeDefaultCoverNameEdit();
     afx_msg void OnBnClickedBackgroundGaussBlurCheck();
     afx_msg void OnBnClickedLyricBackgroundCheck();
     afx_msg void OnBnClickedDarkModeCheck();
@@ -125,8 +132,6 @@ public:
     afx_msg void OnBnClickedLowFreqInCenterCheck();
     afx_msg void OnBnClickedDefaultAlbumCoverHq();
     afx_msg void OnBnClickedRestoreDefaultButton();
-    afx_msg void OnEnKillfocusUiIntervalEdit();
-    afx_msg void OnDeltaposSpin(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnCbnSelchangeCombo1();
     afx_msg void OnPaint();
     afx_msg void OnBnClickedNotifyIconAutoAdaptCheck();
@@ -137,4 +142,7 @@ public:
     afx_msg void OnBnClickedUseDesktopBackgroundCheck();
     afx_msg void OnBnClickedShowNextCheck();
     afx_msg void OnBnClickedShowFpsCheck();
+    afx_msg void OnBnClickedAlwaysShowStatusbarCheck();
+    afx_msg void OnBnClickedUseSystemTitlebarRadio();
+    afx_msg void OnBnClickedUseOwnerDrawTitlebarRadio();
 };

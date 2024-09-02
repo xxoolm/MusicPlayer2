@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include <set>
 #include "SongInfo.h"
+#include "Common.h"
 
 #define STR_OTHER_CLASSIFY_TYPE L"eRk0Q6ov"
 
@@ -29,7 +29,9 @@ public:
         CT_YEAR,
         CT_TYPE,
         CT_BITRATE,
-        CT_RATING
+        CT_RATING,
+        CT_NONE,
+        CT_MAX
     };
 
     typedef std::map<std::wstring, std::vector<SongInfo>, StringComparerNoCase> MediaList;      //定义保存分类结果的map容器，使用不区分大小写的比较器，以实现分类时不区分大小写

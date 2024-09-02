@@ -16,6 +16,8 @@ struct UIColors		//界面颜色
     COLORREF color_button_back;			//歌词翻译按钮的背景色
     COLORREF color_button_pressed;		//按钮按下的颜色
     COLORREF color_button_hover;		//按钮指向时的颜色
+    COLORREF color_stack_indicator;     //staticElement指示器的颜色
+    COLORREF color_scrollbar_handle;    //滚动条把手的颜色
 };
 
 class CPlayerUIHelper
@@ -28,5 +30,8 @@ public:
 
     static bool IsMidiLyric();		//是否绘制MIDI音乐的歌词
     static bool IsDrawStatusBar();  //是否绘制状态栏
+
+    static double GetScrollTextPixel();
+
 };
 

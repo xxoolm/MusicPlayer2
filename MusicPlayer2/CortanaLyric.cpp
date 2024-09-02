@@ -1,7 +1,10 @@
 ﻿#include "stdafx.h"
 #include "CortanaLyric.h"
-#include "PlayListCtrl.h"
+#include "SongInfoHelper.h"
 #include "CPlayerUIBase.h"
+#include "CPlayerUIHelper.h"
+#include "Player.h"
+#include "WinVersionHelper.h"
 
 CCriticalSection CCortanaLyric::m_critical;
 
@@ -25,14 +28,51 @@ CCortanaLyric::~CCortanaLyric()
 
 void CCortanaLyric::Init()
 {
-    if (m_enable)
+    m_hCortanaBar = NULL;
+    HWND hTaskBar = ::FindWindow(_T("Shell_TrayWnd"), NULL);	//任务栏的句柄
+    if (CWinVersionHelper::IsWindows11OrLater())
     {
-        CSingleLock sync(&m_critical, TRUE);
-        HWND hTaskBar = ::FindWindow(_T("Shell_TrayWnd"), NULL);	//任务栏的句柄
+        auto isWindowSearchBox = [](HWND hWnd) -> bool
+        {
+            CRect rect_search_box;
+            ::GetClientRect(hWnd, rect_search_box);
+            return rect_search_box.Width() >= theApp.DPI(120);            //确保搜索框的宽度大于一定值
+        };
+
+        m_hCortanaBar = ::FindWindowEx(hTaskBar, NULL, _T("SIBTrayButton"), NULL);      //如果找到类名为SIBTrayButton的窗口，则说明搜索框是通过StartAllBack软件实现的
+        
+        if (m_hCortanaBar != NULL)
+        {
+            //确保搜索框的宽度大于一定值
+            if (!isWindowSearchBox(m_hCortanaBar))
+                m_hCortanaBar = ::FindWindowEx(hTaskBar, m_hCortanaBar, _T("SIBTrayButton"), NULL); //查找下一个SIBTrayButton
+        }
+
+        if (m_hCortanaBar != NULL)
+        {
+            if (isWindowSearchBox(m_hCortanaBar))
+            {
+                m_cortana_hwnd = m_hCortanaBar;
+                m_hCortanaStatic = m_hCortanaBar;
+            }
+            else
+            {
+                m_cortana_hwnd = NULL;
+                m_hCortanaStatic = NULL;
+            }
+        }
+    }
+    if (m_hCortanaBar == NULL)
+    {
         m_hCortanaBar = ::FindWindowEx(hTaskBar, NULL, _T("TrayDummySearchControl"), NULL);	//Cortana栏的句柄（其中包含3个子窗口）
         m_cortana_hwnd = ::FindWindowEx(m_hCortanaBar, NULL, _T("Button"), NULL);	//Cortana搜索框中类名为“Button”的窗口的句柄
         m_hCortanaStatic = ::FindWindowEx(m_hCortanaBar, NULL, _T("Static"), NULL);		//Cortana搜索框中类名为“Static”的窗口的句柄
-        if (m_cortana_hwnd == NULL) return;
+    }
+    if (m_cortana_hwnd == NULL)
+        return;
+    if (m_enable)
+    {
+        CSingleLock sync(&m_critical, TRUE);
         wchar_t buff[32];
         ::GetWindowText(m_cortana_hwnd, buff, 31);		//获取Cortana搜索框中原来的字符串，用于在程序退出时恢复
         m_cortana_default_text = buff;
@@ -52,7 +92,7 @@ void CCortanaLyric::Init()
             m_cover_width = min_conver_width;
 
         m_pDC = m_cortana_wnd->GetDC();
-        m_draw.Create(m_pDC, m_cortana_wnd);
+        m_draw.Create(m_pDC, m_cortana_wnd->GetFont());
 
 
         //获取用来检查小娜是否为深色模式的采样点的坐标
@@ -104,12 +144,16 @@ void CCortanaLyric::DrawInfo()
     CSingleLock sync(&m_critical, TRUE);
     bool is_midi_lyric = CPlayerUIHelper::IsMidiLyric();
 
+    static wstring str_now_playing{ theApp.m_str_table.LoadText(L"UI_TXT_PLAYSTATUS_PLAYING") + L": " };
+
     //不使用兼容模式显示歌词，直接在小娜搜索框内绘图
-    if(!theApp.m_lyric_setting_data.cortana_lyric_compatible_mode)
+    if(!theApp.m_lyric_setting_data.cortana_lyric_compatible_mode || CWinVersionHelper::IsWindows11OrLater())   //Windows11无法使用兼容模式显示歌词
     {
         if (m_pDC != nullptr)
         {
             m_draw.SetFont(&theApp.m_font_set.cortana.GetFont());
+            // 设置m_draw的歌词字体，DrawLyricTextMultiLine / DrawLyricTextSingleLine依赖此状态
+            m_draw.SetLyricFont(&theApp.m_font_set.cortana.GetFont(), &theApp.m_font_set.cortana_translate.GetFont());
             //双缓冲绘图
             CDrawDoubleBuffer drawDoubleBuffer(m_pDC, m_cortana_rect);
             //使用m_draw绘图
@@ -126,39 +170,36 @@ void CCortanaLyric::DrawInfo()
             }
             else
             {
+                const bool karaoke{ theApp.m_lyric_setting_data.lyric_karaoke_disp };
+                const bool ignore_blank{ theApp.m_lyric_setting_data.donot_show_blank_lines };
 			    Time time{ CPlayer::GetInstance().GetCurrentPosition() };
-			    int progress = CPlayer::GetInstance().m_Lyrics.GetLyricProgress(time);
-			    CLyrics::Lyric lyric = CPlayer::GetInstance().m_Lyrics.GetLyric(time, 0);
+                int progress{ CPlayer::GetInstance().m_Lyrics.GetLyricProgress(time, ignore_blank, karaoke, [this](const wstring& str) { return m_draw.GetTextExtent(str.c_str()).cx; }) };
+                CLyrics::Lyric lyric{ CPlayer::GetInstance().m_Lyrics.GetLyric(time, false, ignore_blank, karaoke) };
                 bool no_lyric{ false };
                 //如果当前一句歌词为空，且持续了超过了20秒，则不显示歌词
-                no_lyric = (lyric.text.empty() && CPlayer::GetInstance().GetCurrentPosition() - lyric.time.toInt() > 20000) || progress >= 1000;
+                no_lyric = (lyric.text.empty() && CPlayer::GetInstance().GetCurrentPosition() - lyric.time_start > 20000) || progress >= 1000;
 
                 if (!CPlayer::GetInstance().m_Lyrics.IsEmpty() && !no_lyric && theApp.m_lyric_setting_data.cortana_show_lyric)		//有歌词时显示歌词
                 {
-				    if (m_draw.IsDrawMultiLine(m_cortana_rect.Height()))
-				    {
-					    m_draw.DrawLyricTextMultiLine(TextRect(), theApp.m_lyric_setting_data.cortana_lyric_align);
-				    }
-				    else
-				    {
-					    m_draw.DrawLyricTextSingleLine(TextRect(), theApp.m_lyric_setting_data.cortana_lyric_double_line, theApp.m_lyric_setting_data.cortana_lyric_align);
-				    }
+                    static int flag{};
+                    if (m_draw.IsDrawMultiLine(m_cortana_rect.Height()))
+                        m_draw.DrawLyricTextMultiLine(TextRect(), theApp.m_lyric_setting_data.cortana_lyric_align);
+                    else
+                        m_draw.DrawLyricTextSingleLine(TextRect(), flag, theApp.m_lyric_setting_data.cortana_lyric_double_line, theApp.m_lyric_setting_data.cortana_lyric_align);
                 }
-                else			//没有歌词时在Cortana搜索框上以滚动的方式显示当前播放歌曲的文件名
+                else            //没有歌词时在Cortana搜索框上以滚动的方式显示当前播放歌曲的文件名
                 {
-                    static int index{};
-                    static wstring song_name{};
+                    static SongInfo last_song_info;
+                    const SongInfo& song_info = CPlayer::GetInstance().GetCurrentSongInfo();
                     //如果当前播放的歌曲发生变化，DrawCortanaText函数的第2参数为true，即重置滚动位置
-                    static CString str_now_playing{ CCommon::LoadText(IDS_NOW_PLAYING, _T(": ")) };
-                    if (index != CPlayer::GetInstance().GetIndex() || song_name != CPlayer::GetInstance().GetFileName())
+                    if (!song_info.IsSameSong(last_song_info))
                     {
-                        DrawCortanaText((str_now_playing + CPlayListCtrl::GetDisplayStr(CPlayer::GetInstance().GetCurrentSongInfo(), theApp.m_media_lib_setting_data.display_format).c_str()), true, GetScrollTextPixel());
-                        index = CPlayer::GetInstance().GetIndex();
-                        song_name = CPlayer::GetInstance().GetFileName();
+                        DrawCortanaText((str_now_playing + CSongInfoHelper::GetDisplayStr(song_info, theApp.m_media_lib_setting_data.display_format)).c_str(), true, CPlayerUIHelper::GetScrollTextPixel());
+                        last_song_info = song_info;
                     }
                     else
                     {
-                        DrawCortanaText((str_now_playing + CPlayListCtrl::GetDisplayStr(CPlayer::GetInstance().GetCurrentSongInfo(), theApp.m_media_lib_setting_data.display_format).c_str()), false, GetScrollTextPixel());
+                        DrawCortanaText((str_now_playing + CSongInfoHelper::GetDisplayStr(song_info, theApp.m_media_lib_setting_data.display_format)).c_str(), false, CPlayerUIHelper::GetScrollTextPixel());
                     }
                 }
             }
@@ -182,7 +223,6 @@ void CCortanaLyric::DrawInfo()
             //    rect.left += m_cover_width;
             //    m_draw.DrawRectTopFrame(rect, m_border_color);
             //}
-            CDrawCommon::SetDrawArea(m_pDC, m_cortana_rect);
         }
     }
 
@@ -200,15 +240,16 @@ void CCortanaLyric::DrawInfo()
             }
             else if (!CPlayer::GetInstance().m_Lyrics.IsEmpty())		//有歌词时显示歌词
             {
+                static const wstring& empty_lyric = theApp.m_str_table.LoadText(L"UI_LYRIC_EMPTY_LINE");
                 Time time{ CPlayer::GetInstance().GetCurrentPosition() };
-                str_disp = CPlayer::GetInstance().m_Lyrics.GetLyric(time, 0).text;
+                str_disp = CPlayer::GetInstance().m_Lyrics.GetLyric(time, false, false, false).text;
                 if (str_disp.empty())
-                    str_disp = CCommon::LoadText(IDS_DEFAULT_LYRIC_TEXT);
+                    str_disp = empty_lyric;
             }
             else
             {
                 //没有歌词时显示当前播放歌曲的名称
-                str_disp = CCommon::LoadText(IDS_NOW_PLAYING, _T(": ")).GetString() + CPlayListCtrl::GetDisplayStr(CPlayer::GetInstance().GetCurrentSongInfo(), theApp.m_media_lib_setting_data.display_format);
+                str_disp = str_now_playing + CSongInfoHelper::GetDisplayStr(CPlayer::GetInstance().GetCurrentSongInfo(), theApp.m_media_lib_setting_data.display_format);
             }
 
             if(str_disp != str_disp_last)
@@ -277,7 +318,7 @@ void CCortanaLyric::DrawAlbumCover(const CImage & album_cover)
     if (m_enable)
     {
         CRect cover_rect = CoverRect();
-        m_draw.SetDrawArea(cover_rect);
+        DrawAreaGuard guard(&m_draw, cover_rect);
         if (album_cover.IsNull() || !m_show_album_cover)
         {
             if (theApp.m_lyric_setting_data.show_default_album_icon_in_search_box)
@@ -287,8 +328,13 @@ void CCortanaLyric::DrawAlbumCover(const CImage & album_cover)
                 rc_icon.right = rc_icon.bottom = icon_side;
                 rc_icon.MoveToX(cover_rect.left + (cover_rect.Width() - icon_side) / 2);
                 rc_icon.MoveToY(cover_rect.top + (cover_rect.Height() - icon_side) / 2);
-                HICON icon{ CPlayer::GetInstance().IsPlaying() ? theApp.m_icon_set.default_cover_small : theApp.m_icon_set.default_cover_small_not_played };
-                m_draw.DrawIcon(icon, rc_icon.TopLeft(), rc_icon.Size());
+
+                IconMgr::IconType icon_type = IconMgr::IconType::IT_Default_Cover_Stopped;
+                if (CPlayer::GetInstance().IsPlaying())
+                    icon_type = IconMgr::IconType::IT_Default_Cover_Playing;
+                HICON hIcon = theApp.m_icon_mgr.GetHICON(icon_type, IconMgr::IconStyle::IS_Color, IconMgr::IconSize::IS_DPI_32);
+
+                m_draw.DrawIcon(hIcon, rc_icon.TopLeft(), rc_icon.Size());
             }
             else
             {
@@ -326,10 +372,9 @@ void CCortanaLyric::DrawSpectrum()
 	if (rc_spectrum.Height() > max_spectrum_height)
 		rc_spectrum.top = rc_spectrum.bottom - max_spectrum_height;
 
-    m_draw.SetDrawArea(rc_spectrum);
+    DrawAreaGuard guard(&m_draw, rc_spectrum);
     rc_spectrum.right += theApp.DPI(8);
-    m_draw.DrawSpectrum(rc_spectrum, CUIDrawer::SC_64, false, theApp.m_app_setting_data.spectrum_low_freq_in_center);
-    m_draw.SetDrawArea(m_cortana_rect);
+    m_draw.DrawSpectrum(rc_spectrum, CUIDrawer::SC_64, false, theApp.m_app_setting_data.spectrum_low_freq_in_center, true);
 }
 
 CRect CCortanaLyric::TextRect() const
@@ -346,18 +391,6 @@ CRect CCortanaLyric::CoverRect() const
     CRect cover_rect = m_cortana_rect;
     cover_rect.right = cover_rect.left + m_cover_width;
     return cover_rect;
-}
-
-double CCortanaLyric::GetScrollTextPixel() const
-{
-    //界面刷新频率越高，即界面刷新时间间隔越小，则每次滚动的像素值就要越小
-    double pixel = static_cast<double>(theApp.m_app_setting_data.ui_refresh_interval) *0.025 + 0.2;
-    pixel = static_cast<double>(theApp.GetDPI()) * pixel / 96;
-    if (pixel < 0.1)
-        pixel = 0.1;
-    if (pixel > 0.5 && pixel < 1)
-        pixel = 1;
-    return pixel;
 }
 
 void CCortanaLyric::ResetCortanaText()
@@ -423,6 +456,11 @@ void CCortanaLyric::ApplySearchBoxTransparentChanged()
     }
 }
 
+bool CCortanaLyric::IsSearchBoxAvailable() const
+{
+    return m_cortana_hwnd != NULL;
+}
+
 void CCortanaLyric::AlbumCoverEnable(bool enable)
 {
     CSingleLock sync(&m_critical, TRUE);
@@ -432,7 +470,7 @@ void CCortanaLyric::AlbumCoverEnable(bool enable)
     if (last_enable && !enable && m_pDC != nullptr)
     {
         CRect cover_rect = CoverRect();
-        CDrawCommon::SetDrawArea(m_pDC, cover_rect);
+        DrawAreaGuard guard(&m_draw, cover_rect);
         m_pDC->FillSolidRect(cover_rect, m_colors.back_color);
     }
 }

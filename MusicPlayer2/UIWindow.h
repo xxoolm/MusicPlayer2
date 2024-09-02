@@ -1,6 +1,6 @@
-#pragma once
-#include <afxwin.h>
+﻿#pragma once
 #include "IPlayerUI.h"
+
 class CUIWindow :
     public CStatic
 {
@@ -16,6 +16,7 @@ protected:
     IPlayerUI*& m_pUI;
     bool m_bTitlebarLButtonDown{};
     CPoint m_ptLButtonDown{};
+    IPlayerUI* GetCurUi() const;
 
     virtual void PreSubclassWindow();
     virtual BOOL PreTranslateMessage(MSG* pMsg);
@@ -31,5 +32,9 @@ public:
     afx_msg void OnPaint();
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnMouseLeave();
+protected:
+    afx_msg LRESULT OnTabletQuerysystemgesturestatus(WPARAM wParam, LPARAM lParam);
+public:
+    afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 };
 

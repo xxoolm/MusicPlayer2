@@ -3,11 +3,19 @@
 #include "Common.h"
 #include "AudioCommon.h"
 #include "MusicPlayer2.h"
+#include "Player.h"
+#include "CommonDialogMgr.h"
 
 CBASSMidiLibrary CBassCore::m_bass_midi_lib;
 CBassCore::MidiLyricInfo CBassCore::m_midi_lyric;
 BASS_MIDI_FONT CBassCore::m_sfont{};
 CCriticalSection CBassCore::m_critical;
+CBASSEncodeLibrary CBassCore::m_bass_encode_lib;
+CBASSWmaLibrary CBassCore::m_bass_wma_lib;
+CBassMixLibrary CBassCore::m_bass_mix_lib;
+bool CBassCore::m_fading = false;
+
+#define CONVERTING_TEMP_FILE_NAME L"converting_5k2019u6271iyt8j"
 
 CBassCore::CBassCore()
 {
@@ -28,7 +36,7 @@ void CBassCore::InitCore()
     theApp.m_output_devices.clear();
     DeviceInfo device{};
     device.index = -1;
-    device.name = CCommon::LoadText(IDS_DEFAULT_OUTPUT_DEVICE);
+    device.name = theApp.m_str_table.LoadText(L"TXT_OPT_PLAY_DEVICE_NAME_BASS_DEFAULT");
     theApp.m_output_devices.push_back(device);
     while (true)
     {
@@ -72,7 +80,7 @@ void CBassCore::InitCore()
     //向支持的文件列表插入原生支持的文件格式
     CAudioCommon::m_surpported_format.clear();
     SupportedFormat format;
-    format.description = CCommon::LoadText(IDS_BASIC_AUDIO_FORMAT);
+    format.description = theApp.m_str_table.LoadText(L"TXT_FILE_TYPE_BASE");
     format.extensions.insert(format.extensions.end(), theApp.m_nc_setting_data.default_file_type.begin(), theApp.m_nc_setting_data.default_file_type.end());
     for (const auto& f : theApp.m_nc_setting_data.default_file_type)
     {
@@ -126,11 +134,11 @@ void CBassCore::InitCore()
         if (format.description == L"MIDI")
         {
             m_bass_midi_lib.Init(plugin_dir + plugin_file);
-            m_sfont_name = CCommon::LoadText(_T("<"), IDS_NONE, _T(">"));
+            m_sfont_name = theApp.m_str_table.LoadText(L"UI_TXT_SF2_NAME_NONE");
             m_sfont.font = 0;
             if (m_bass_midi_lib.IsSucceed())
             {
-                wstring sf2_path = theApp.m_general_setting_data.sf2_path;
+                wstring sf2_path = theApp.m_play_setting_data.sf2_path;
                 if (!CCommon::FileExist(sf2_path))		//如果设置的音色库路径不存在，则从.\Plugins\soundfont\目录下查找音色库文件
                 {
                     vector<wstring> sf2s;
@@ -143,10 +151,9 @@ void CBassCore::InitCore()
                     m_sfont.font = m_bass_midi_lib.BASS_MIDI_FontInit(sf2_path.c_str(), BASS_UNICODE);
                     if (m_sfont.font == 0)
                     {
-                        CString info;
-                        info = CCommon::LoadTextFormat(IDS_SOUND_FONT_LOAD_FAILED, { sf2_path });
-                        theApp.WriteLog(info.GetString());
-                        m_sfont_name = CCommon::LoadText(_T("<"), IDS_LOAD_FAILED, _T(">"));
+                        wstring info = theApp.m_str_table.LoadTextFormat(L"LOG_SF2_LOAD_FAILED", { sf2_path });
+                        theApp.WriteLog(info);
+                        m_sfont_name = theApp.m_str_table.LoadText(L"UI_TXT_SF2_NAME_FAILDE");
                     }
                     else
                     {
@@ -175,6 +182,7 @@ void CBassCore::UnInitCore()
     {
         BASS_PluginFree(handle);
     }
+    m_fading = false;
 }
 
 unsigned int CBassCore::GetHandle()
@@ -264,7 +272,7 @@ void CBassCore::GetBASSAudioInfo(HSTREAM hStream, SongInfo & song_info, int flag
 {
     //获取长度
     if (flag&AF_LENGTH)
-        song_info.lengh = CBassCore::GetBASSSongLength(hStream);
+        song_info.end_pos = CBassCore::GetBASSSongLength(hStream);
     //获取比特率
     if(flag&AF_BITRATE)
     {
@@ -278,13 +286,14 @@ void CBassCore::GetBASSAudioInfo(HSTREAM hStream, SongInfo & song_info, int flag
         BASS_CHANNELINFO info{};
         BASS_ChannelGetInfo(hStream, &info);
         song_info.freq = info.freq;
-        song_info.bits = info.origres;
-        song_info.channels = info.chans;
+        song_info.bits = static_cast<BYTE>(info.origres);
+        song_info.channels = static_cast<BYTE>(info.chans);
     }
     if(flag&AF_TAG_INFO)
     {
         CAudioTag audio_tag(song_info, hStream);
         audio_tag.GetAudioTag();
+        audio_tag.GetAudioRating();
         //获取midi音乐的标题
         if (CBassCore::m_bass_midi_lib.IsSucceed() && audio_tag.GetAudioType() == AU_MIDI)
         {
@@ -292,7 +301,6 @@ void CBassCore::GetBASSAudioInfo(HSTREAM hStream, SongInfo & song_info, int flag
             if (CBassCore::m_bass_midi_lib.BASS_MIDI_StreamGetMark(hStream, BASS_MIDI_MARK_TRACK, 0, &mark) && !mark.track)
             {
                 song_info.title = CCommon::StrToUnicode(mark.text);
-                song_info.info_acquired = true;
             }
         }
     }
@@ -356,11 +364,14 @@ void CBassCore::Open(const wchar_t * file_path)
 void CBassCore::Close()
 {
     CSingleLock sync(&m_critical, TRUE);
-    if(KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID))
-        BASS_ChannelStop(m_musicStream);
-    RemoveFXHandle();
-    BASS_StreamFree(m_musicStream);
-    m_musicStream = 0;
+    if (m_musicStream != 0)
+    {
+        if (KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID))
+            BASS_ChannelStop(m_musicStream);
+        RemoveFXHandle();
+        BASS_StreamFree(m_musicStream);
+        m_musicStream = 0;
+    }
 }
 
 void CBassCore::Play()
@@ -392,11 +403,13 @@ void CBassCore::Pause()
     {
         BASS_ChannelSlideAttribute(m_musicStream, BASS_ATTRIB_VOL, 0, theApp.m_play_setting_data.fade_time);        //音量渐变到0
         KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID);
+        m_fading = true;
         //设置一个淡出时间的定时器
         SetTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID, theApp.m_play_setting_data.fade_time, [](HWND Arg1, UINT Arg2, UINT_PTR Arg3, DWORD Arg4)
         {
             KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID);
-            BASS_ChannelPause(CPlayer::GetInstance().GetPlayerCore()->GetHandle());     //当定时器器触发时，即音量已经渐变到0，执行暂停操作
+            BASS_ChannelPause(CPlayer::GetInstance().GetBassHandle());     //当定时器器触发时，即音量已经渐变到0，执行暂停操作
+            m_fading = false;
         });
     }
     else
@@ -413,11 +426,13 @@ void CBassCore::Stop()
     {
         BASS_ChannelSlideAttribute(m_musicStream, BASS_ATTRIB_VOL, 0, theApp.m_play_setting_data.fade_time);
         KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID);
+        m_fading = true;
         SetTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID, theApp.m_play_setting_data.fade_time, [](HWND Arg1, UINT Arg2, UINT_PTR Arg3, DWORD Arg4)
         {
             KillTimer(theApp.m_pMainWnd->GetSafeHwnd(), FADE_TIMER_ID);
-            BASS_ChannelStop(CPlayer::GetInstance().GetPlayerCore()->GetHandle());
-            BASS_ChannelSetPosition(CPlayer::GetInstance().GetPlayerCore()->GetHandle(), 0, BASS_POS_BYTE);
+            BASS_ChannelStop(CPlayer::GetInstance().GetBassHandle());
+            BASS_ChannelSetPosition(CPlayer::GetInstance().GetBassHandle(), 0, BASS_POS_BYTE);
+            m_fading = false;
         });
     }
     else
@@ -429,9 +444,12 @@ void CBassCore::Stop()
 
 void CBassCore::SetVolume(int vol)
 {
-    m_volume = vol;
-    float volume = static_cast<float>(vol) / 100.0f;
-    BASS_ChannelSetAttribute(m_musicStream, BASS_ATTRIB_VOL, volume);
+    if (!m_fading)
+    {
+        m_volume = vol;
+        float volume = static_cast<float>(vol) / 100.0f;
+        BASS_ChannelSetAttribute(m_musicStream, BASS_ATTRIB_VOL, volume);
+    }
 }
 
 void CBassCore::SetSpeed(float speed)
@@ -505,6 +523,276 @@ void CBassCore::GetAudioInfo(const wchar_t * file_path, SongInfo & song_info, in
     hStream = BASS_StreamCreateFile(FALSE, file_path, 0, 0, BASS_SAMPLE_FLOAT);
     GetBASSAudioInfo(hStream, song_info, flag);
     BASS_StreamFree(hStream);
+}
+
+bool CBassCore::EncodeAudio(SongInfo song_info, const wstring& dest_file_path, EncodeFormat encode_format, void* encode_para, int dest_freq, EncodeAudioProc proc)
+{
+    wstring out_file_path_temp = CCommon::GetTemplatePath() + CONVERTING_TEMP_FILE_NAME;     //转换时的临时文件名
+
+    //创建解码通道
+    const int BUFF_SIZE{ 20000 };
+    // char buff[BUFF_SIZE];
+    std::unique_ptr<char[]> buff(new char[BUFF_SIZE]);
+    HSTREAM hStream = BASS_StreamCreateFile(FALSE, song_info.file_path.c_str(), 0, 0, BASS_STREAM_DECODE/* | BASS_SAMPLE_FLOAT*/);
+    if (hStream == 0)
+    {
+        proc(CONVERT_ERROR_FILE_CANNOT_OPEN);
+        return false;
+    }
+
+    //获取通道信息
+    BASS_CHANNELINFO channel_info;
+    BASS_ChannelGetInfo(hStream, &channel_info);
+    bool is_midi = (CAudioCommon::GetAudioTypeByBassChannel(channel_info.ctype) == AU_MIDI);
+    if (is_midi)
+    {
+        bool sf2_loaded = (CBassCore::m_bass_midi_lib.IsSucceed() && CBassCore::m_sfont.font != 0);
+        if (sf2_loaded)
+        {
+            CBassCore::m_bass_midi_lib.BASS_MIDI_StreamSetFonts(hStream, &CBassCore::m_sfont, 1);
+        }
+        else
+        {
+            BASS_StreamFree(hStream);
+            //::PostMessage(pthis->GetSafeHwnd(), WM_CONVERT_PROGRESS, file_index, CONVERT_ERROR_MIDI_NO_SF2);
+            proc(CONVERT_ERROR_MIDI_NO_SF2);
+            return false;
+        }
+    }
+
+    //转换采样频率
+    HSTREAM hStreamOld = 0;
+    if (dest_freq > 0 && dest_freq != channel_info.freq)
+    {
+        hStreamOld = hStream;
+        hStream = m_bass_mix_lib.BASS_Mixer_StreamCreate(dest_freq, channel_info.chans, BASS_MIXER_END | BASS_STREAM_DECODE);
+        if (hStream != 0)
+        {
+            m_bass_mix_lib.BASS_Mixer_StreamAddChannel(hStream, hStreamOld, 0);
+        }
+        else
+        {
+            hStream = hStreamOld;
+            hStreamOld = 0;
+        }
+    }
+
+    //获取流的长度
+    QWORD length = BASS_ChannelGetLength(hStreamOld != 0 ? hStreamOld : hStream, 0);
+    if (hStreamOld != 0 && channel_info.freq != 0)     //如果开启了转换采样频率
+        length = length * dest_freq / channel_info.freq;
+    if (length == 0) length = 1;	//防止length作为除数时为0
+
+    //如果转换的音频是cue音轨，则先定位到曲目开始处
+    if (song_info.is_cue)
+    {
+        CBassCore::SetCurrentPosition(hStreamOld != 0 ? hStreamOld : hStream, song_info.start_pos.toInt());
+    }
+
+    HENCODE hEncode;
+    if (encode_format != EncodeFormat::WMA)
+    {
+        //设置解码器命令行参数
+        wstring cmdline;
+        switch (encode_format)
+        {
+        case EncodeFormat::MP3:
+        {
+            if (encode_para == nullptr)
+                break;
+            MP3EncodePara* mp3_para = (MP3EncodePara*)encode_para;
+            //设置lame命令行参数
+            cmdline = m_encode_dir;
+            cmdline += L"lame.exe ";
+            cmdline += mp3_para->cmd_para;
+            cmdline += L" - \"";
+            cmdline += out_file_path_temp;
+            cmdline.push_back(L'\"');
+        }
+        break;
+        case EncodeFormat::OGG:
+        {
+            if (encode_para == nullptr)
+                break;
+            OggEncodePara* ogg_para = (OggEncodePara*)encode_para;
+
+            cmdline = m_encode_dir;
+            CString str;
+            str.Format(_T("oggenc -q %d"), ogg_para->encode_quality);
+            cmdline += str;
+            cmdline += L" -o \"";
+            cmdline += dest_file_path;
+            cmdline += L"\" -";
+        }
+        break;
+        case EncodeFormat::FLAC:
+        {
+            if (encode_para == nullptr)
+                break;
+            FlacEncodePara* flac_para = (FlacEncodePara*)encode_para;
+            cmdline = m_encode_dir;
+            cmdline += _T("flac.exe ");
+            cmdline += flac_para->cmd_para.c_str();
+            cmdline += L" -o \"";
+            cmdline += dest_file_path;
+            cmdline += L"\" -";
+        }
+        break;
+        default:
+            cmdline = dest_file_path;
+        }
+        //开始解码
+        hEncode = m_bass_encode_lib.BASS_Encode_StartW(hStream, cmdline.c_str(), BASS_ENCODE_AUTOFREE | (encode_format == EncodeFormat::WAV ? BASS_ENCODE_PCM : 0), NULL, 0);
+        if (hEncode == 0)
+        {
+            BASS_StreamFree(hStream);
+            if (hStreamOld != 0)
+                BASS_StreamFree(hStreamOld);
+            proc(CONVERT_ERROR_ENCODE_CHANNEL_FAILED);
+            return false;
+        }
+    }
+    else		//输出为WMA时使用专用的编码器
+    {
+        if (!m_bass_wma_lib.IsSucceed())
+        {
+            BASS_StreamFree(hStream);
+            if (hStreamOld != 0)
+                BASS_StreamFree(hStreamOld);
+            return false;
+        }
+        //开始解码
+        if (encode_para == nullptr)
+            return false;
+        WmaEncodePara* wma_para = (WmaEncodePara*)encode_para;
+        int wma_bitrate;
+        if (wma_para->cbr)
+            wma_bitrate = wma_para->cbr_bitrate * 1000;
+        else
+            wma_bitrate = wma_para->vbr_quality;
+        hEncode = m_bass_wma_lib.BASS_WMA_EncodeOpenFileW(hStream, NULL, BASS_WMA_ENCODE_STANDARD | BASS_WMA_ENCODE_SOURCE, wma_bitrate, dest_file_path.c_str());
+        int error = BASS_ErrorGetCode();
+        int error_code{ CONVERT_ERROR_ENCODE_CHANNEL_FAILED };
+        //如果出现了错误，则写入错误日志
+        if (error != 0)
+        {
+            wstring log_str = theApp.m_str_table.LoadTextFormat(L"LOG_BASS_FORMAT_CONVERT_ERROR", { song_info.file_path, L"WMA", error });
+            theApp.WriteLog(log_str);
+            switch (error)
+            {
+            case BASS_ERROR_WMA:
+                error_code = CONVERT_ERROR_WMA_NO_WMP9_OR_LATER;
+                break;
+            case BASS_ERROR_NOTAVAIL:
+                error_code = CONVERT_ERROR_WMA_NO_SUPPORTED_ENCODER;
+                break;
+            default:
+                break;
+            }
+        }
+        if (hEncode == 0)
+        {
+            BASS_StreamFree(hStream);
+            if (hStreamOld != 0)
+                BASS_StreamFree(hStreamOld);
+            proc(error_code);
+            return false;
+        }
+    }
+
+    while (BASS_ChannelIsActive(hStream) != BASS_ACTIVE_STOPPED)
+    {
+        if (theApp.m_format_convert_dialog_exit)
+        {
+            m_bass_encode_lib.BASS_Encode_Stop(hEncode);
+            BASS_StreamFree(hStream);
+            if (hStreamOld != 0)
+                BASS_StreamFree(hStreamOld);
+            return false;
+        }
+        // BASS_ChannelGetData(hStream, buff, BUFF_SIZE);
+        BASS_ChannelGetData(hStream, buff.get(), BUFF_SIZE);
+        //if (m_bass_encode_lib.BASS_Encode_IsActive(hStream) == 0)
+        //{
+        //	m_bass_encode_lib.BASS_Encode_Stop(hEncode);
+        //	BASS_StreamFree(hStream);
+        //}
+
+        //获取转换百分比
+        int percent;
+        static int last_percent{ -1 };
+        if (!song_info.is_cue)
+        {
+            QWORD position = BASS_ChannelGetPosition(hStream, 0);
+            percent = static_cast<int>(position * 100 / length);
+        }
+        else
+        {
+            int cue_position = CBassCore::GetBASSCurrentPosition(hStreamOld != 0 ? hStreamOld : hStream) - song_info.start_pos.toInt();
+            int cue_length = song_info.length().toInt();
+            percent = static_cast<int>(cue_position * 100 / cue_length);
+            if (percent == 100)
+                break;
+        }
+        if (percent < 0 || percent>100)
+        {
+            proc(CONVERT_ERROR_ENCODE_PARA_ERROR);
+            BASS_StreamFree(hStream);
+            if (hStreamOld != 0)
+                BASS_StreamFree(hStreamOld);
+            return false;
+        }
+        if (last_percent != percent)
+        {
+            proc(percent);
+        }
+        last_percent = percent;
+    }
+
+    BASS_StreamFree(hStream);
+    if (hStreamOld != 0)
+        BASS_StreamFree(hStreamOld);
+
+    //由于在转换mp3文件时将目标文件输出到了临时目录，因此转换完成后将此文件移动到输出目录
+    if (encode_format == EncodeFormat::MP3)
+    {
+        CFilePathHelper out_file_path_helper{ dest_file_path };
+        CommonDialogMgr::MoveAFile(AfxGetMainWnd()->GetSafeHwnd(), out_file_path_temp, out_file_path_helper.GetDir());
+        if (CCommon::FileExist(out_file_path_helper.GetFilePath()))
+            CommonDialogMgr::DeleteAFile(AfxGetMainWnd()->GetSafeHwnd(), out_file_path_helper.GetFilePath());
+        CCommon::FileRename(out_file_path_helper.GetDir() + CONVERTING_TEMP_FILE_NAME, out_file_path_helper.GetFileName());
+    }
+    return true;
+}
+
+bool CBassCore::InitEncoder()
+{
+    wstring encode_dll_path;
+    wstring wma_dll_path;
+    wstring plugin_dir;
+    m_encode_dir = theApp.m_local_dir + L"Encoder\\";
+    plugin_dir = theApp.m_local_dir + L"Plugins\\";
+    encode_dll_path = m_encode_dir + L"bassenc.dll";
+    m_bass_encode_lib.Init(encode_dll_path);
+
+    wma_dll_path = plugin_dir + L"basswma.dll";
+    m_bass_wma_lib.Init(wma_dll_path);
+
+    m_bass_mix_lib.Init(m_encode_dir + L"bassmix.dll");
+
+    return m_bass_encode_lib.IsSucceed();
+}
+
+void CBassCore::UnInitEncoder()
+{
+    m_bass_encode_lib.UnInit();
+    m_bass_wma_lib.UnInit();
+    m_bass_mix_lib.UnInit();
+}
+
+bool CBassCore::IsFreqConvertAvailable()
+{
+    return m_bass_mix_lib.IsSucceed();
 }
 
 bool CBassCore::IsMidi()
@@ -591,26 +879,32 @@ int CBassCore::GetErrorCode()
 
 std::wstring CBassCore::GetErrorInfo(int error_code)
 {
-    CString info = CCommon::LoadTextFormat(IDS_BASS_ERROR_LOG_INFO, { error_code, m_file_path });
-    return std::wstring(info);
+    // 这个方法获取写入错误日志的字符串，后面会附加CPlayer的方法名
+    wstring info = theApp.m_str_table.LoadTextFormat(L"LOG_BASS_ERROR", { error_code, m_file_path });
+    return info;
 }
 
 std::wstring CBassCore::GetErrorInfo()
 {
-    CString info = CCommon::LoadText(IDS_ERROR_CODE, _T(": "));
+    // 这个方法获取错误时状态栏显示的错误字符串“播放出错: <%1%>”
     int error_code = BASS_ErrorGetCode();
-    info += std::to_wstring(error_code).c_str();
-    return std::wstring(info);
+    wstring info = theApp.m_str_table.LoadTextFormat(L"UI_TXT_PLAYSTATUS_ERROR_CORE_BASS", { error_code });
+    return info;
 }
 
-int CBassCore::GetDeviceCount()
+//int CBassCore::GetDeviceCount()
+//{
+//    BASS_DEVICEINFO info;
+//    int count{};
+//    for (int i = 0; BASS_GetDeviceInfo(i, &info); i++)
+//        if (info.flags&BASS_DEVICE_ENABLED) // device is enabled
+//            count++; // count it
+//    return count;
+//}
+
+bool CBassCore::IsVolumeFadingOut()
 {
-    BASS_DEVICEINFO info;
-    int count{};
-    for (int i = 0; BASS_GetDeviceInfo(i, &info); i++)
-        if (info.flags&BASS_DEVICE_ENABLED) // device is enabled
-            count++; // count it
-    return count;
+    return m_fading;
 }
 
 int CBassCore::GetBASSCurrentPosition(HSTREAM hStream)

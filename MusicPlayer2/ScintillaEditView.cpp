@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "ScintillaEditView.h"
 #include "Common.h"
+#include "MusicPlayer2.h"
 
 
 // CScintillaEditView
@@ -22,6 +23,7 @@ CScintillaEditView::~CScintillaEditView()
 BEGIN_MESSAGE_MAP(CScintillaEditView, CView)
     ON_WM_PAINT()
     ON_WM_RBUTTONUP()
+    ON_MESSAGE(WM_TABLET_QUERYSYSTEMGESTURESTATUS, &CScintillaEditView::OnTabletQuerysystemgesturestatus)
 END_MESSAGE_MAP()
 
 
@@ -52,7 +54,7 @@ void CScintillaEditView::Dump(CDumpContext& dc) const
 #endif //_DEBUG
 
 
-void CScintillaEditView::SetText(const wstring& text)
+void CScintillaEditView::SetTextW(const wstring& text)
 {
     m_change_notification_enable = false;       //确保正在执行SetText时不响应文本改变消息
     bool is_read_onle = IsReadOnly();
@@ -77,18 +79,18 @@ void CScintillaEditView::SetText(const wstring& text)
     m_change_notification_enable = true;
 }
 
-void CScintillaEditView::GetText(wstring& text)
+void CScintillaEditView::GetTextW(wstring& text)
 {
     text.clear();
     int size{};
-    const wchar_t* str_unicode = GetText(size);
+    const wchar_t* str_unicode = GetTextW(size);
     if (size == 0)
         return;
     text.assign(str_unicode, size);
     delete[] str_unicode;
 }
 
-const wchar_t* CScintillaEditView::GetText(int& size)
+const wchar_t* CScintillaEditView::GetTextW(int& size)
 {
     auto length = SendMessage(SCI_GETLENGTH);
     char* buf = new char[length + 1];
@@ -104,12 +106,34 @@ const wchar_t* CScintillaEditView::GetText(int& size)
     return str_unicode;
 }
 
-const char * CScintillaEditView::GetTextUtf8(int & size)
+const char * CScintillaEditView::GetText(int & size)
 {
     size = SendMessage(SCI_GETLENGTH);
     char* buf = new char[size + 1];
     SendMessage(SCI_GETTEXT, size + 1, reinterpret_cast<LPARAM>(buf));
     return buf;
+}
+
+std::string CScintillaEditView::GetText(int start, int end)
+{
+    if (start == end)
+        return std::string();
+    Sci_TextRange text_range;
+    //获取选中范围
+    text_range.chrg.cpMin = start;
+    text_range.chrg.cpMax = end;
+    if (text_range.chrg.cpMax < text_range.chrg.cpMin)
+        std::swap(text_range.chrg.cpMin, text_range.chrg.cpMax);
+    //选中范围长度
+    int length = text_range.chrg.cpMax - text_range.chrg.cpMin;
+    //初始化接收字符串缓冲区
+    char* buff = new char[length + 1];
+    text_range.lpstrText = buff;
+    //获取选中部分文本
+    SendMessage(SCI_GETTEXTRANGE, 0, (LPARAM)&text_range);
+    std::string str_selected(buff, length);
+    delete[] buff;
+    return str_selected;
 }
 
 void CScintillaEditView::SetFontFace(const wchar_t* font_face)
@@ -147,7 +171,7 @@ void CScintillaEditView::GetSel(int & start, int & end)
     if (byte_end < byte_start)
         std::swap(byte_start, byte_end);
     int size{};
-    const char* str = GetTextUtf8(size);
+    const char* str = GetText(size);
     start = BytePosToCharactorPos(byte_start, str, size);
     end = BytePosToCharactorPos(byte_end, str, size);
     delete[] str;
@@ -399,7 +423,7 @@ CScintillaEditView::eEolMode CScintillaEditView::JudgeEolMode(const wstring& str
 
 int CScintillaEditView::CharactorPosToBytePos(int pos, const wchar_t * str, size_t size)
 {
-    if (pos >= size)
+    if (pos >= static_cast<int>(size))
         return size;
     else
         return WideCharToMultiByte(CP_UTF8, 0, str, pos, NULL, 0, NULL, NULL);
@@ -407,7 +431,7 @@ int CScintillaEditView::CharactorPosToBytePos(int pos, const wchar_t * str, size
 
 int CScintillaEditView::BytePosToCharactorPos(int pos, const char * str, size_t size)
 {
-    if (pos >= size)
+    if (pos >= static_cast<int>(size))
         return size;
     else
         return MultiByteToWideChar(CP_UTF8, 0, str, pos, NULL, 0);
@@ -418,11 +442,32 @@ void CScintillaEditView::SetContextMenu(CMenu* pMenu, CWnd* pMenuOwner)
 {
     if (pMenu != nullptr)
     {
+        // 这里当前没有使用，使用的是Scintilla的默认右键菜单
+        // 我改了SCI_USEPOPUP的处理，使用lParam传递string table
+        // 如果真的要SendMessage(SCI_USEPOPUP, SC_POPUP_NEVER);记得改回去
         m_pMenu = pMenu;
         m_pContextMenuOwner = pMenuOwner;
         SendMessage(SCI_USEPOPUP, SC_POPUP_NEVER);
     }
 
+}
+
+void CScintillaEditView::GetLinePos(int line, int& start, int& end)
+{
+    start = SendMessage(SCI_POSITIONFROMLINE, line);
+    end = SendMessage(SCI_GETLINEENDPOSITION, line);
+    int doc_length = SendMessage(SCI_GETLENGTH);
+    if (start < 0 && start > doc_length)
+        start = 0;
+    if (end < 0 || end > doc_length)
+        end = doc_length;
+}
+
+void CScintillaEditView::GetCurLinePos(int& start, int& end)
+{
+    int cur_pos = SendMessage(SCI_GETCURRENTPOS);
+    int cur_line = SendMessage(SCI_LINEFROMPOSITION, cur_pos);
+    GetLinePos(cur_line, start, end);
 }
 
 void CScintillaEditView::SetLexerLyric(ColorTable theme_color)
@@ -440,6 +485,18 @@ void CScintillaEditView::SetLexerLyric(ColorTable theme_color)
     //设置当前行背景色
     SendMessage(SCI_SETCARETLINEVISIBLE, TRUE);
     SendMessage(SCI_SETCARETLINEBACK, theme_color.light3);
+}
+
+std::string CScintillaEditView::GetCurrentLineText()
+{
+    int start{}, end{};
+    GetCurLinePos(start, end);
+    return GetText(start, end);
+}
+
+std::wstring CScintillaEditView::GetCurrentLineTextW()
+{
+    return CCommon::StrToUnicode(GetCurrentLineText(), CodeType::UTF8_NO_BOM);
 }
 
 // CScintillaEditView 消息处理程序
@@ -476,7 +533,9 @@ void CScintillaEditView::OnInitialUpdate()
 {
     CView::OnInitialUpdate();
 
-    // TODO: 在此添加专用代码和/或调用基类
+    const auto& str_table = theApp.m_str_table.GetScintillaStrMap();
+    SendMessage(SCI_USEPOPUP, SC_POPUP_ALL, reinterpret_cast<LPARAM>(&str_table)); // 设置右键菜单为启用，并传递string table
+
     SendMessage(SCI_SETCODEPAGE, SC_CP_UTF8);       //总是使用Unicode
     SendMessage(SCI_SETMARGINTYPEN, SCINTILLA_MARGIN_LINENUMBER, SC_MARGIN_NUMBER);
 
@@ -498,4 +557,10 @@ void CScintillaEditView::OnRButtonUp(UINT nFlags, CPoint point)
 
 
     CView::OnRButtonUp(nFlags, point);
+}
+
+
+afx_msg LRESULT CScintillaEditView::OnTabletQuerysystemgesturestatus(WPARAM wParam, LPARAM lParam)
+{
+    return 0;
 }

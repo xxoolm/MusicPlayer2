@@ -2,7 +2,7 @@
 #pragma once
 #include "CVariant.h"
 #include <initializer_list>
-#include <functional>
+#include <numeric>
 #include <gdiplus.h>
 
 enum class Command
@@ -15,8 +15,7 @@ enum class Command
     PLAY_PAUSE,
     FF,	//快进
     REW,		//快倒
-    VOLUME_UP,
-    VOLUME_DOWN,
+    VOLUME_ADJ,
     SEEK
 };
 
@@ -44,22 +43,14 @@ enum class CodeType
     AUTO
 };
 
-//语言
-enum class Language
-{
-    FOLLOWING_SYSTEM,		//跟随系统
-    ENGLISH,				//英语
-    SIMPLIFIED_CHINESE		//简体中文
-};
-
 class CCommon
 {
 public:
     CCommon();
     ~CCommon();
 
-    //判断文件是否存在
-    static bool FileExist(const wstring& file);
+    // 判断文件是否存在，file为文件绝对路径，is_case_sensitive为true时对文件名区分大小写（路径仍然不区分）
+    static bool FileExist(const wstring& file, bool is_case_sensitive = false);
 
     //判断文件夹是否存在
     static bool FolderExist(const wstring& file);
@@ -67,7 +58,13 @@ public:
     //判断是否是文件夹
     static bool IsFolder(const wstring& path);
 
-    static unsigned __int64 GetFileLastModified(const wstring& file_path);
+    // 判断文件是否存在，file为文件绝对路径，如果存在会更正文件名大小写到与实际文件一致
+    static bool CheckAndFixFile(wstring& file);
+
+    static bool GetFileLastModified(const wstring& file_path, unsigned __int64& modified_time);
+
+    //将FILETIME表示的时间转换为time_t（自1970年1月1日以来的秒数）
+    static time_t FileTimeToTimeT(unsigned __int64 file_time);
 
     //判断文件是否隐藏
     static bool IsFileHidden(const wstring& file_path);
@@ -116,18 +113,26 @@ public:
 
     static bool CharIsNumber(wchar_t ch);
 
+    //将字符串转换成整数，从字符串中提取第最先出现的数字
+    static int StringToInt(const wstring& str);
+
+    // 按换行分割字符串，自适应CR/LF/CRLF换行
+    static void StringSplitLine(const wstring& source_str, vector<wstring>& results, bool skip_empty = true, bool trim = true);
+
     //将一个字符串分割成若干个字符串
     //str: 原始字符串
     //div_ch: 用于分割的字符
     //result: 接收分割后的结果
     static void StringSplit(const wstring& str, wchar_t div_ch, vector<wstring>& results, bool skip_empty = true, bool trim = true);
     static void StringSplit(const wstring& str, const wstring& div_str, vector<wstring>& results, bool skip_empty = true, bool trim = true);
+    static void StringSplit(const string& str, char div_ch, vector<string>& result, bool skip_empty = true, bool trim = true);
+    static void StringSplit(const string& str, const string& div_str, vector<string>& results, bool skip_empty = true, bool trim = true);
 
     //将一个字符串分割成若干个字符串，可以指定多个分隔字符
     //str: 原始字符串
     //div_ch: 字符串中任意一个字符作为分割字符
     //result: 接收分割后的结果
-    static void StringSplitWithMulitChars(const wstring& str, const wchar_t* div_ch, vector<wstring>& results, bool skip_empty = true);
+    static void StringSplitWithMulitChars(const wstring& str, const wstring& div_ch, vector<wstring>& results, bool skip_empty = true);
 
     //使用指定的分割符分割字符串，将按每个分割符中的顺序分割字符串，每个分割符只用一次
     //str: 原始字符串
@@ -138,6 +143,11 @@ public:
     //将若干个字符串合并成一个字符串
     //div_ch: 用于分割的字符
     static wstring StringMerge(const vector<wstring>& strings, wchar_t div_ch);
+
+    // 合并字符串，"aa","bb","cc"模式，skip_empty，trim
+    static wstring MergeStringList(const vector<wstring>& values);
+    // 分割字符串，"aa","bb","cc"模式，skip_empty，trim
+    static void SplitStringList(vector<wstring>& values, const wstring& str_value);
 
     //中文繁简转换
     static wstring TranslateToSimplifiedChinese(const wstring& str);
@@ -183,17 +193,17 @@ public:
     static CodeType JudgeCodeType(const string& str, CodeType default_code = CodeType::ANSI, bool auto_utf8 = false);
 
     static bool IsURL(const wstring& str);
-
+private:
     //判断一个字符串是否符合Windows路径的格式
     static bool IsWindowsPath(const wstring& str);
-
-    //判断一个字符串是否符合路径的格式（而不是判断路径是否有效）
+public:
+    //判断一个字符串是否符合绝对路径的格式（而不是判断路径是否有效）
     static bool IsPath(const wstring& str);
 
-    //删除一个字符串中指定的字符
+    //替换一个字符串中指定的字符
     static bool StringCharacterReplace(wstring& str, wchar_t ch, wchar_t ch_replaced);
 
-    static void StringReplace(wstring& str, const wstring& str_old, const wstring& str_new);
+    static bool StringReplace(wstring& str, const wstring& str_old, const wstring& str_new);
 
     static CString DataSizeToString(size_t data_size);
 
@@ -212,27 +222,6 @@ public:
     //获取系统特殊文件夹的位置
     //csidl: 含义同SHGetSpecialFolderLocation函数的参数
     static wstring GetSpecialDir(int csidl);
-
-    ////获取一个列表控件最大长度项目宽度的像素值
-    //static int GetListWidth(CListBox& list);
-
-    //删除一个文件
-    static int DeleteAFile(HWND hwnd, _tstring file);
-    //删除多个文件
-    static int DeleteFiles(HWND hwnd, const vector<_tstring>& files);
-
-    //复制一个文件
-    static int CopyAFile(HWND hwnd, _tstring file_from, _tstring file_to);
-    //复制多个文件
-    static int CopyFiles(HWND hwnd, const vector<_tstring>& files, _tstring file_to);
-
-    //移动一个文件
-    //file_from：要移动的文件的路径
-    //file_to：移动目标的目录的位置
-    static int MoveAFile(HWND hwnd, _tstring file_from, _tstring file_to);
-
-    //移动多个文件
-    static int MoveFiles(HWND hwnd, const vector<_tstring>& files, _tstring file_to);
 
     static bool CreateDir(const _tstring& path);
 
@@ -254,11 +243,11 @@ public:
     //从剪贴板获取字符串
     static wstring GetStringFromClipboard();
 
-    //写入日志
+    // 写入日志(对同一日志文件并发写入会丢失，请确保参数path指定的文件同一时刻只有一个线程能够写入)
     static void WriteLog(const wchar_t* path, const wstring& content);
 
-    //将通过命令行参数传递过来的多个文件路径拆分，并保存到file容器里，如果参数传递过来的第一个文件不是文件而是文件夹，则返回文件夹路径，否则，返回空字符串
-    static wstring DisposeCmdLineFiles(const wstring& cmd_line, vector<wstring>& files);
+    // 将通过命令行参数传递过来的多个文件路径拆分，并保存到file容器里
+    static void DisposeCmdLineFiles(const wstring& cmd_line, vector<wstring>& files);
 
     //解析命令行参数中的命令
     static bool GetCmdLineCommand(const wstring& cmd_line, int& command);
@@ -322,24 +311,30 @@ public:
     //将hSrc中的所有菜单项添加到菜单hDst中（来自 https://blog.csdn.net/zgl7903/article/details/71077441）
     static int AppendMenuOp(HMENU hDst, HMENU hSrc);
 
-    //判断一个菜单项是否在菜单中（不检查子菜单）
+    //判断一个菜单项是否在菜单中（检查子菜单）
     static bool IsMenuItemInMenu(CMenu* pMenu, UINT id);
 
     //获取一个菜单项的序号
     static int GetMenuItemPosition(CMenu* pMenu, UINT id);
 
-    //从资源文件载入字符串。其中，front_str、back_str为载入字符串时需要在前面或后面添加的字符串
-    static CString LoadText(UINT id, LPCTSTR back_str = nullptr);
-    static CString LoadText(LPCTSTR front_str, UINT id, LPCTSTR back_str = nullptr);
+    /**
+     * @brief   遍历一个菜单
+     * @param   CMenu * pMenu 遍历的菜单
+     * @param   func 一个函数对象或lambda表达式，第1个参数是被遍历菜单项的菜单对象，第2个参数是被遍历菜单项的id
+     */
+    static void IterateMenuItem(CMenu* pMenu, std::function<void(CMenu*, UINT)> func);
 
-    //安全的格式化字符串，将format_str中形如<%序号%>的字符串替换成初始化列表paras中的元素，元素支持int/double/LPCTSTR/CString格式，序号从1开始
-    static CString StringFormat(LPCTSTR format_str, const std::initializer_list<CVariant>& paras);
+    //判断str的左侧是否匹配matched_str
+    static bool StringLeftMatch(const std::wstring& str, const std::wstring& matched_str);
 
-    //从资源文件中载入字符串，并将资源字符串中形如<%序号%>的字符串替换成可变参数列表中的参数
-    static CString LoadTextFormat(UINT id, const std::initializer_list<CVariant>& paras);
+    // 获取当前线程首选 UI 语言列表
+    static bool GetThreadLanguageList(vector<wstring>& language_tag);
 
-    //设置线程语言
-    static void SetThreadLanguage(Language language);
+    // 设置当前线程的线程首选 UI 语言
+    static bool SetThreadLanguageList(const vector<wstring>& language_tag);
+
+    // 获取当前系统的默认UI字体
+    static wstring GetSystemDefaultUIFont();
 
     //安全的字符串复制函数
     static void WStringCopy(wchar_t* str_dest, int dest_size, const wchar_t* str_source, int source_size = INT_MAX);
@@ -362,7 +357,7 @@ public:
     static bool StringIsVersion(LPCTSTR str);
 
     //读取文件内容
-    static bool GetFileContent(const wchar_t* file_path, string& contents_buff, bool binary = true, size_t max_size = 0x500000);
+    static bool GetFileContent(const wchar_t* file_path, string& contents_buff, size_t max_size = 0x500000);
 
     //读取文件内容
     //file_path: 文件的路径
@@ -404,6 +399,15 @@ public:
         return max;
     }
 
+    template<class T>
+    static void SetNumRange(T& num, const T& min_value, const T& max_value)
+    {
+        if (num > max_value)
+            num = max_value;
+        if (num < min_value)
+            num = min_value;
+    }
+
     //以当前语言比较两个字符串
     //返回值：0：相同；-1：小于；1：大于
     static int StringCompareInLocalLanguage(const wstring& str1, const wstring& str2, bool no_case = false);
@@ -414,8 +418,11 @@ public:
     //获取一个数字的某个bit位
     static bool GetNumberBit(unsigned short num, int bit);
 
+    //从资源加载自定义文本资源，并返回原始数据
+    static std::string GetTextResourceRawData(UINT id);
+
     //从资源加载自定义文本资源。id：资源的ID，code_type：文本的编码格式
-    static CString GetTextResource(UINT id, CodeType code_type);
+    static wstring GetTextResource(UINT id, CodeType code_type);
 
     //从资源加载png图片资源
     //https://www.cnblogs.com/a-live/p/3222567.html
@@ -432,9 +439,29 @@ public:
     static POINT CalculateWindowMoveOffset(CRect& check_rect, vector<CRect>& screen_rects);
 
     //从资源文件读取上次编译时间
-    static CString GetLastCompileTime();
+    static void GetLastCompileTime(wstring& time_str, wstring& hash_str);
 
     static unsigned __int64 GetCurTimeElapse();
+
+    static wstring EncodeURIComponent(wstring uri);
+
+    static void OutputDebugStringFormat(LPCTSTR str, ...);
+
+    /**
+     * @brief Replace all pattern to new_content
+     * @param input Input string
+     * @param pattern Pattern
+     * @param new_content New content
+     * @return Result string
+    */
+    static std::wstring StrReplace(std::wstring& input, std::wstring pattern, std::wstring new_content);
+
+    // https://stackoverflow.com/questions/17074324
+    template <typename T, typename Compare>
+    static std::vector<std::size_t> sort_permutation(const std::vector<T>& vec, Compare compare);
+
+    template <typename T>
+    static std::vector<T> apply_permutation(const std::vector<T>& vec, const std::vector<std::size_t>& p);
 };
 
 template<class T>
@@ -575,4 +602,23 @@ inline void CCommon::DeleteModelessDialog(T*& dlg)
         delete dlg;
         dlg = nullptr;
     }
+}
+
+template <typename T, typename Compare>
+inline std::vector<std::size_t> CCommon::sort_permutation(const std::vector<T>& vec, Compare compare)
+{
+    std::vector<std::size_t> p(vec.size());
+    std::iota(p.begin(), p.end(), 0);
+    std::sort(p.begin(), p.end(),
+        [&](std::size_t i, std::size_t j) { return compare(std::cref(vec[i]), std::cref(vec[j])); });
+    return p;
+}
+
+template <typename T>
+inline std::vector<T> CCommon::apply_permutation(const std::vector<T>& vec, const std::vector<std::size_t>& p)
+{
+    std::vector<T> sorted_vec(vec.size());
+    std::transform(p.begin(), p.end(), sorted_vec.begin(),
+        [&](std::size_t i) { return vec[i]; });
+    return sorted_vec;
 }

@@ -3,6 +3,16 @@
 #include "GdiPlusTool.h"
 
 
+void CDrawCommon::ScrollInfo::Reset()
+{
+    shift_cnt = 0;
+    shift_dir = false;
+    freez = 20;
+    dir_changed = false;
+}
+
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
 CDrawCommon::CDrawCommon()
 {
 }
@@ -13,12 +23,10 @@ CDrawCommon::~CDrawCommon()
         SAFE_DELETE(m_pGraphics);
 }
 
-void CDrawCommon::Create(CDC* pDC, CWnd* pMainWnd)
+void CDrawCommon::Create(CDC* pDC, CFont* pFont)
 {
     m_pDC = pDC;
-    m_pMainWnd = pMainWnd;
-    if (m_pMainWnd != nullptr)
-        m_pfont = m_pMainWnd->GetFont();
+    m_pfont = pFont;
     if (pDC != nullptr)
     {
         m_pGraphics = new Gdiplus::Graphics(pDC->GetSafeHdc());
@@ -26,12 +34,10 @@ void CDrawCommon::Create(CDC* pDC, CWnd* pMainWnd)
     }
 }
 
-void CDrawCommon::Create(CDC* pDC, Gdiplus::Graphics* pGraphics, CWnd* pMainWnd)
+void CDrawCommon::Create(CDC* pDC, Gdiplus::Graphics* pGraphics, CFont* pFont)
 {
     m_pDC = pDC;
-    m_pMainWnd = pMainWnd;
-    if (m_pMainWnd != nullptr)
-        m_pfont = m_pMainWnd->GetFont();
+    m_pfont = pFont;
     m_pGraphics = pGraphics;
     m_auto_destory_graphics = false;
 }
@@ -41,10 +47,10 @@ void CDrawCommon::Create(CDC* pDC, Gdiplus::Graphics* pGraphics, CWnd* pMainWnd)
 //  m_backColor = back_color;
 //}
 
-CFont* CDrawCommon::SetFont(CFont* pfont)
+CFont* CDrawCommon::SetFont(CFont* pFont)
 {
     CFont* pOldFont = m_pfont;
-    m_pfont = pfont;
+    m_pfont = pFont;
     return pOldFont;
 }
 
@@ -61,15 +67,14 @@ void CDrawCommon::DrawWindowText(CRect rect, LPCTSTR lpszString, COLORREF color,
 {
     if (m_pDC->GetSafeHdc() == NULL)
         return;
+    ASSERT(align != Alignment::AUTO);
     m_pDC->SetTextColor(color);
     m_pDC->SetBkMode(TRANSPARENT);
+    ASSERT(m_pfont != nullptr); // 请先设置字体
     if (m_pfont != nullptr)
         m_pDC->SelectObject(m_pfont);
     //设置绘图的剪辑区域
-    if (!no_clip_area)
-    {
-        SetDrawArea(m_pDC, rect);
-    }
+    DrawAreaGuard guard(this, rect, true, !no_clip_area);
     CSize text_size = m_pDC->GetTextExtent(lpszString);
     //用背景色填充矩形区域
     //m_pDC->FillSolidRect(rect, m_backColor);
@@ -94,7 +99,7 @@ void CDrawCommon::DrawWindowText(CRect rect, LPCTSTR lpszString, COLORREF color,
         {
             format = (default_right_align ? DT_RIGHT : 0);
         }
-        m_pDC->DrawText(lpszString, rect, format | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
+        m_pDC->DrawText(lpszString, rect, format | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS);
     }
 }
 
@@ -102,18 +107,17 @@ void CDrawCommon::DrawWindowText(CRect rect, LPCTSTR lpszString, COLORREF color1
 {
     if (m_pDC->GetSafeHdc() == NULL)
         return;
+    ASSERT(align != Alignment::AUTO);
     if (split < 0) split = 0;
     if (split > 1000) split = 1000;
     m_pDC->SetBkMode(TRANSPARENT);
+    ASSERT(m_pfont != nullptr); // 请先设置字体
     if (m_pfont != nullptr)
         m_pDC->SelectObject(m_pfont);
     CSize text_size;    //文本的大小
     int text_top, text_left;        //输出文本的top和left位置
     //设置绘图的剪辑区域，防止文字输出超出控件区域
-    if (!no_clip_area)
-    {
-        SetDrawArea(m_pDC, rect);
-    }
+    DrawAreaGuard guard(this, rect, true, !no_clip_area);
     //获取文字的宽度和高度
     text_size = m_pDC->GetTextExtent(lpszString);
     //计算文字的起始坐标
@@ -155,89 +159,14 @@ void CDrawCommon::DrawWindowText(CRect rect, LPCTSTR lpszString, COLORREF color1
     //输出文本
     m_pDC->SetTextColor(color2);
     m_pDC->DrawText(lpszString, text_rect, DT_SINGLELINE | DT_NOPREFIX);        //绘制背景文字
-    if (color1 != color2)
+    if (color1 != color2 && split != 1000)  // 进度1000表示当前歌词“已完成”不进行高亮
     {
         m_pDC->SetTextColor(color1);
         m_pDC->DrawText(lpszString, text_f_rect, DT_SINGLELINE | DT_NOPREFIX);      //绘制覆盖文字
     }
 }
 
-void CDrawCommon::DrawWindowTextForLyric(CRect rect, LPCTSTR lpszBeforeString, LPCTSTR lpszString, COLORREF color1, COLORREF color2, int split, bool isBefore, Alignment align, bool no_clip_area)
-{
-    if (m_pDC->GetSafeHdc() == NULL)
-        return;
-    if (split < 0) split = 0;
-    if (split > 1000) split = 1000;
-    m_pDC->SetBkMode(TRANSPARENT);
-    if (m_pfont != nullptr)
-        m_pDC->SelectObject(m_pfont);
-    // 设置绘图的剪辑区域，防止文字输出超出控件区域
-    if (!no_clip_area)
-    {
-        SetDrawArea(m_pDC, rect);
-    }
-    // 获取文字的宽度和高度
-    CSize before_size{ m_pDC->GetTextExtent(lpszBeforeString) };
-    CSize sp_size{ m_pDC->GetTextExtent(L" ")};
-    CSize string_size{ m_pDC->GetTextExtent(lpszString) };
-
-    // 重新计算含有进度符号的进度
-    if (isBefore)
-        split = split * before_size.cx / (before_size.cx + sp_size.cx + string_size.cx);
-    else
-        split = (split * string_size.cx + (before_size.cx + sp_size.cx) * 1000) / (before_size.cx + sp_size.cx + string_size.cx);
-
-    wstring string;
-    string.append(lpszBeforeString).append(L" ").append(lpszString);
-    CSize text_size{ m_pDC->GetTextExtent(string.c_str()) };    // 文本的大小
-    // 计算文字的起始坐标
-    int text_top, text_left;        // 输出文本的top和left位置
-    text_top = rect.top + (rect.Height() - text_size.cy) / 2;
-    if (align == Alignment::CENTER)
-        text_left = rect.left + (rect.Width() - text_size.cx) / 2;
-    else if (align == Alignment::RIGHT)
-        text_left = rect.left + (rect.Width() - text_size.cx);
-    else
-        text_left = rect.left;
-    // 计算背景文字和覆盖文字的矩形区域
-    CRect text_rect{ CPoint{ text_left, text_top }, text_size };                                                // 背景文字的区域
-    CRect text_f_rect{ CPoint{ text_left, text_top }, CSize{ text_size.cx * split / 1000, text_size.cy } };     // 覆盖文字的区域
-                                                                                                                // 如果文本宽度大于控件宽度，就要根据分割的位置滚动文本
-    if (text_size.cx > rect.Width())
-    {
-        // 如果分割的位置（歌词进度）剩下的宽度已经小于控件宽度的一半，此时使文本右侧和控件右侧对齐
-        if (text_rect.Width() - text_f_rect.Width() < rect.Width() / 2)
-        {
-            text_rect.MoveToX(rect.left - (text_rect.Width() - rect.Width()));
-            text_f_rect.MoveToX(text_rect.left);
-        }
-        // 分割位置剩下的宽度还没有到小于控件宽度的一半，但是分割位置的宽度已经大于控件宽度的一半时，需要移动文本使分割位置正好在控件的中间
-        else if (text_f_rect.Width() > rect.Width() / 2)
-        {
-            text_rect.MoveToX(rect.left - (text_f_rect.Width() - rect.Width() / 2));
-            text_f_rect.MoveToX(text_rect.left);
-        }
-        // 分割位置还不到控件宽度的一半时，使文本左侧和控件左侧对齐
-        else
-        {
-            text_rect.MoveToX(rect.left);
-            text_f_rect.MoveToX(rect.left);
-        }
-    }
-
-    // 用背景色填充矩形区域
-    // m_pDC->FillSolidRect(rect, m_backColor);
-    // 输出文本
-    m_pDC->SetTextColor(color2);
-    m_pDC->DrawText(string.c_str(), text_rect, DT_SINGLELINE | DT_NOPREFIX);            // 绘制背景文字
-    if (color1 != color2)
-    {
-        m_pDC->SetTextColor(color1);
-        m_pDC->DrawText(string.c_str(), text_f_rect, DT_SINGLELINE | DT_NOPREFIX);      // 绘制覆盖文字
-    }
-}
-
-void CDrawCommon::DrawScrollText(CRect rect, LPCTSTR lpszString, COLORREF color, double pixel, bool center, ScrollInfo& scroll_info, bool reset)
+void CDrawCommon::DrawScrollText(CRect rect, LPCTSTR lpszString, COLORREF color, double pixel, bool center, ScrollInfo& scroll_info, bool reset, bool no_clip_area)
 {
     if (m_pDC->GetSafeHdc() == NULL)
         return;
@@ -254,19 +183,17 @@ void CDrawCommon::DrawScrollText(CRect rect, LPCTSTR lpszString, COLORREF color,
 
     if (reset)
     {
-        scroll_info.shift_cnt = 0;
-        scroll_info.shift_dir = false;
-        scroll_info.freez = 20;
-        scroll_info.dir_changed = false;
+        scroll_info.Reset();
     }
     m_pDC->SetTextColor(color);
     m_pDC->SetBkMode(TRANSPARENT);
+    ASSERT(m_pfont != nullptr); // 请先设置字体
     if (m_pfont != nullptr)
         m_pDC->SelectObject(m_pfont);
     CSize text_size;    //文本的大小
     int text_top, text_left;        //输出文本的top和left位置
     //设置绘图的剪辑区域，防止文字输出超出控件区域
-    SetDrawArea(m_pDC, rect);
+    DrawAreaGuard guard(this, rect, true, !no_clip_area);
     //获取文字的宽度和高度
     text_size = m_pDC->GetTextExtent(lpszString);
     //计算文字的起始坐标
@@ -280,7 +207,7 @@ void CDrawCommon::DrawScrollText(CRect rect, LPCTSTR lpszString, COLORREF color,
     //如果文本宽度大于控件宽度，就滚动文本
     if (text_size.cx > rect.Width())
     {
-        text_rect.MoveToX(rect.left - scroll_info.shift_cnt * pixel);
+        text_rect.MoveToX(static_cast<int>((rect.left - scroll_info.shift_cnt * pixel)));
         if ((text_rect.right < rect.right || text_rect.left > rect.left))       //移动到边界时换方向
         {
             if (!scroll_info.dir_changed)
@@ -335,12 +262,13 @@ void CDrawCommon::DrawScrollText2(CRect rect, LPCTSTR lpszString, COLORREF color
     }
     m_pDC->SetTextColor(color);
     m_pDC->SetBkMode(TRANSPARENT);
+    ASSERT(m_pfont != nullptr); // 请先设置字体
     if (m_pfont != nullptr)
         m_pDC->SelectObject(m_pfont);
     CSize text_size;    //文本的大小
     int text_top, text_left;        //输出文本的top和left位置
     //设置绘图的剪辑区域，防止文字输出超出控件区域
-    SetDrawArea(m_pDC, rect);
+    DrawAreaGuard guard(this, rect, true);
     //获取文字的宽度和高度
     text_size = m_pDC->GetTextExtent(lpszString);
     //计算文字的起始坐标
@@ -354,11 +282,11 @@ void CDrawCommon::DrawScrollText2(CRect rect, LPCTSTR lpszString, COLORREF color
     //如果文本宽度大于控件宽度，就滚动文本
     if (text_size.cx > rect.Width())
     {
-        text_rect.MoveToX(rect.left - scroll_info.shift_cnt * pixel);
+        text_rect.MoveToX(static_cast<int>(rect.left - scroll_info.shift_cnt * pixel));
         if ((text_rect.right < rect.right || text_rect.left > rect.left))       //移动超出边界时暂停滚动，freez从20开始递减
         {
             scroll_info.shift_cnt--;    //让文本往回移动一次，防止反复判断为超出边界
-            text_rect.MoveToX(rect.left - scroll_info.shift_cnt * pixel);
+            text_rect.MoveToX(static_cast<int>(rect.left - scroll_info.shift_cnt * pixel));
             scroll_info.freez = 20;     //变换方向时稍微暂停滚动一段时间
         }
     }
@@ -394,22 +322,6 @@ void CDrawCommon::DrawScrollText2(CRect rect, LPCTSTR lpszString, COLORREF color
 //  BGBrush.DeleteObject();
 //}
 
-void CDrawCommon::SetDrawArea(CDC* pDC, CRect rect)
-{
-    CRgn rgn;
-    rgn.CreateRectRgnIndirect(rect);
-    pDC->SelectClipRgn(&rgn);
-}
-
-void CDrawCommon::SetDrawArea(CRect rect)
-{
-    if (m_pDC->GetSafeHdc() == NULL)
-        return;
-    CRgn rgn;
-    rgn.CreateRectRgnIndirect(rect);
-    m_pDC->SelectClipRgn(&rgn);
-}
-
 void CDrawCommon::DrawBitmap(CBitmap& bitmap, CPoint start_point, CSize size, StretchMode stretch_mode, bool no_clip_area)
 {
     if (m_pDC->GetSafeHdc() == NULL)
@@ -426,7 +338,8 @@ void CDrawCommon::DrawBitmap(CBitmap& bitmap, CPoint start_point, CSize size, St
     m_pDC->SetStretchBltMode(HALFTONE);
     m_pDC->SetBrushOrg(0, 0);
     //CSize draw_size;
-    ImageDrawAreaConvert(CSize(bm.bmWidth, bm.bmHeight), start_point, size, stretch_mode, no_clip_area);
+    DrawAreaGuard guard(this, CRect(start_point, size), true, !no_clip_area);
+    ImageDrawAreaConvert(CSize(bm.bmWidth, bm.bmHeight), start_point, size, stretch_mode);
     m_pDC->StretchBlt(start_point.x, start_point.y, size.cx, size.cy, &memDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
     memDC.DeleteDC();
 }
@@ -452,28 +365,18 @@ void CDrawCommon::DrawImage(const CImage& image, CPoint start_point, CSize size,
     if (m_pDC->GetSafeHdc() == NULL)
         return;
     m_pGraphics->SetInterpolationMode(Gdiplus::InterpolationMode::InterpolationModeHighQuality);
-    if (!no_clip_area)
-    {
-        Gdiplus::Rect rect_clip = CGdiPlusTool::CRectToGdiplusRect(CRect(start_point, size));
-        m_pGraphics->SetClip(rect_clip);
-    }
-    ImageDrawAreaConvert(CSize(image.GetWidth(), image.GetHeight()), start_point, size, stretch_mode, no_clip_area);
+    DrawAreaGuard guard(this, CRect(start_point, size), false, !no_clip_area);
+    ImageDrawAreaConvert(CSize(image.GetWidth(), image.GetHeight()), start_point, size, stretch_mode);
     Gdiplus::Bitmap bm(image, NULL);
-    m_pGraphics->DrawImage(&bm, start_point.x, start_point.y, size.cx, size.cy);
-    m_pGraphics->ResetClip();
+    m_pGraphics->DrawImage(&bm, INT(start_point.x), INT(start_point.y), INT(size.cx), INT(size.cy));
 }
 
 void CDrawCommon::DrawImage(Gdiplus::Image* pImage, CPoint start_point, CSize size, StretchMode stretch_mode, bool no_clip_area)
 {
     m_pGraphics->SetInterpolationMode(Gdiplus::InterpolationMode::InterpolationModeHighQuality);
-    if (!no_clip_area)
-    {
-        Gdiplus::Rect rect_clip = CGdiPlusTool::CRectToGdiplusRect(CRect(start_point, size));
-        m_pGraphics->SetClip(rect_clip);
-    }
-    ImageDrawAreaConvert(CSize(pImage->GetWidth(), pImage->GetHeight()), start_point, size, stretch_mode, no_clip_area);
-    m_pGraphics->DrawImage(pImage, start_point.x, start_point.y, size.cx, size.cy);
-    m_pGraphics->ResetClip();
+    DrawAreaGuard guard(this, CRect(start_point, size), false, !no_clip_area);
+    ImageDrawAreaConvert(CSize(pImage->GetWidth(), pImage->GetHeight()), start_point, size, stretch_mode);
+    m_pGraphics->DrawImage(pImage, INT(start_point.x), INT(start_point.y), INT(size.cx), INT(size.cy));
 }
 
 void CDrawCommon::DrawIcon(HICON hIcon, CPoint start_point, CSize size)
@@ -486,12 +389,27 @@ void CDrawCommon::DrawIcon(HICON hIcon, CPoint start_point, CSize size)
         ::DrawIconEx(m_pDC->GetSafeHdc(), start_point.x, start_point.y, hIcon, size.cx, size.cy, 0, NULL, DI_NORMAL);
 }
 
+void CDrawCommon::DrawIcon(HICON hIcon, CRect rect)
+{
+    DrawIcon(hIcon, rect.TopLeft(), rect.Size());
+}
+
+void CDrawCommon::DrawIcon(HICON hIcon, CRect rect, int icon_size)
+{
+    CRect rc_icon{ rect };
+    //根据指定的图标大小使图标在矩形中居中
+    rc_icon.left += (rect.Width() - icon_size) / 2;
+    rc_icon.top += (rect.Height() - icon_size) / 2;
+    rc_icon.right = rc_icon.left + icon_size;
+    rc_icon.bottom = rc_icon.top + icon_size;
+    DrawIcon(hIcon, rc_icon);
+}
+
 void CDrawCommon::FillRect(CRect rect, COLORREF color, bool no_clip_area)
 {
     if (m_pDC->GetSafeHdc() == NULL)
         return;
-    if (!no_clip_area)
-        SetDrawArea(m_pDC, rect);
+    DrawAreaGuard guard(this, rect, true, !no_clip_area);
     m_pDC->FillSolidRect(rect, color);
 }
 
@@ -501,8 +419,7 @@ void CDrawCommon::FillAlphaRect(CRect rect, COLORREF color, BYTE alpha, bool no_
         return;
     if (alpha == 0)
         return;
-    if (!no_clip_area)
-        SetDrawArea(m_pDC, rect);
+    DrawAreaGuard guard(this, rect, true, !no_clip_area);
     if (alpha == 255)
     {
         FillRect(rect, color, no_clip_area);
@@ -539,7 +456,7 @@ void CDrawCommon::DrawRectTopFrame(CRect rect, COLORREF color, int pilex)
 {
     if (m_pDC->GetSafeHdc() == NULL)
         return;
-    SetDrawArea(m_pDC, rect);
+    DrawAreaGuard guard(this, rect, true);
     CPen aPen, * pOldPen;
     aPen.CreatePen(PS_SOLID, pilex, color);
     pOldPen = m_pDC->SelectObject(&aPen);
@@ -622,6 +539,9 @@ void CDrawCommon::DrawRoundRect(CRect rect, COLORREF color, int radius, BYTE alp
 
 void CDrawCommon::DrawRoundRect(Gdiplus::Rect rect, Gdiplus::Color color, int radius)
 {
+    int max_radius{ (std::min)(rect.Width, rect.Height) / 2 };
+    if (radius > max_radius)
+        radius = max_radius;
     CRect rc{ CGdiPlusTool::GdiplusRectToCRect(rect) };
     rc.right--;
     rc.bottom--;
@@ -630,7 +550,24 @@ void CDrawCommon::DrawRoundRect(Gdiplus::Rect rect, Gdiplus::Color color, int ra
     CGdiPlusTool::CreateRoundRectPath(round_rect_path, rc, radius);
 
     m_pGraphics->SetSmoothingMode(Gdiplus::SmoothingMode::SmoothingModeAntiAlias);      //设置抗锯齿
-    m_pGraphics->FillPath(&Gdiplus::SolidBrush(color), &round_rect_path);          //填充路径
+    Gdiplus::SolidBrush brush(color);
+    m_pGraphics->FillPath(&brush, &round_rect_path);          //填充路径
+    m_pGraphics->SetSmoothingMode(Gdiplus::SmoothingMode::SmoothingModeNone);
+}
+
+void CDrawCommon::DrawEllipse(CRect rect, COLORREF color, BYTE alpha /*= 255*/)
+{
+    DrawEllipse(CGdiPlusTool::CRectToGdiplusRect(rect), CGdiPlusTool::COLORREFToGdiplusColor(color, alpha));
+}
+
+void CDrawCommon::DrawEllipse(Gdiplus::Rect rect, Gdiplus::Color color)
+{
+    //生成椭圆路径
+    Gdiplus::GraphicsPath ellipse_path;
+    ellipse_path.AddEllipse(rect);
+    m_pGraphics->SetSmoothingMode(Gdiplus::SmoothingMode::SmoothingModeAntiAlias);      //设置抗锯齿
+    Gdiplus::SolidBrush brush(color);
+    m_pGraphics->FillPath(&brush, &ellipse_path);                  //填充路径
     m_pGraphics->SetSmoothingMode(Gdiplus::SmoothingMode::SmoothingModeNone);
 }
 
@@ -638,6 +575,7 @@ CSize CDrawCommon::GetTextExtent(LPCTSTR str)
 {
     if (m_pDC->GetSafeHdc() == NULL)
         return CSize();
+    ASSERT(m_pfont != nullptr); // 请先设置字体
     if (m_pfont != nullptr)
         m_pDC->SelectObject(m_pfont);
     return m_pDC->GetTextExtent(str);
@@ -699,24 +637,21 @@ void CDrawCommon::ImageResize(const CImage& img_src, const wstring& path_dest, i
 
     ImageResize(img_src, imDest, size_dest);
     //输出为指定格式
-    const GUID* pType{ &(GUID)GUID_NULL };
     switch (type)
     {
     case IT_JPG:
-        pType = &Gdiplus::ImageFormatJPEG;
+        imDest.Save(path_dest.c_str(), Gdiplus::ImageFormatJPEG);
         break;
     case IT_PNG:
-        pType = &Gdiplus::ImageFormatPNG;
+        imDest.Save(path_dest.c_str(), Gdiplus::ImageFormatPNG);
         break;
     case IT_GIF:
-        pType = &Gdiplus::ImageFormatGIF;
+        imDest.Save(path_dest.c_str(), Gdiplus::ImageFormatGIF);
         break;
     default:
-        pType = &Gdiplus::ImageFormatBMP;
+        imDest.Save(path_dest.c_str(), Gdiplus::ImageFormatBMP);
         break;
     }
-
-    imDest.Save(path_dest.c_str(), *pType);
 }
 
 void CDrawCommon::ImageResize(const wstring& path_src, const wstring& path_dest, int size, ImageType type)
@@ -725,11 +660,6 @@ void CDrawCommon::ImageResize(const wstring& path_src, const wstring& path_dest,
     //读入原始图片
     imSrc.Load(path_src.c_str());
     ImageResize(imSrc, path_dest, size, type);
-}
-
-HICON CDrawCommon::LoadIconResource(UINT id, int width, int height)
-{
-    return (HICON)LoadImage(AfxGetInstanceHandle(), MAKEINTRESOURCE(id), IMAGE_ICON, width, height, 0);
 }
 
 HBITMAP CDrawCommon::CopyBitmap(HBITMAP hSourceHbitmap)
@@ -805,7 +735,7 @@ void CDrawCommon::SaveBitmap(HBITMAP bitmap, LPCTSTR path)
     img_tmp.Detach();
 }
 
-void CDrawCommon::ImageDrawAreaConvert(CSize image_size, CPoint& start_point, CSize& size, StretchMode stretch_mode, bool no_clip_area)
+void CDrawCommon::ImageDrawAreaConvert(CSize image_size, CPoint& start_point, CSize& size, StretchMode stretch_mode)
 {
     if (size.cx == 0 || size.cy == 0)       //如果指定的size为0，则使用位图的实际大小绘制
     {
@@ -815,8 +745,6 @@ void CDrawCommon::ImageDrawAreaConvert(CSize image_size, CPoint& start_point, CS
     {
         if (stretch_mode == StretchMode::FILL)
         {
-            if (!no_clip_area)
-                SetDrawArea(m_pDC, CRect(start_point, size));
             float w_h_ratio, w_h_ratio_draw;        //图像的宽高比、绘制大小的宽高比
             w_h_ratio = static_cast<float>(image_size.cx) / image_size.cy;
             w_h_ratio_draw = static_cast<float>(size.cx) / size.cy;
@@ -856,4 +784,49 @@ void CDrawCommon::ImageDrawAreaConvert(CSize image_size, CPoint& start_point, CS
             size = draw_size;
         }
     }
+}
+
+CRect CDrawCommon::CalculateCenterIconRect(CRect rect, int icon_size)
+{
+    CRect rc_icon;
+    rc_icon.left = rect.left + (rect.Width() - icon_size) / 2;
+    rc_icon.top = rect.top + (rect.Height() - icon_size) / 2;
+    rc_icon.right = rc_icon.left + icon_size;
+    rc_icon.bottom = rc_icon.top + icon_size;
+    return rc_icon;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+CRect DrawAreaGuard::SetDrawArea(CRect rect, bool gdi_only)
+{
+    //如果设置的绘图区域为空，则清除绘图区域
+    if (rect.IsRectEmpty())
+        ResetDrawArea(gdi_only);
+
+    CRect old_rect{};
+    //设置GDI绘图区域
+    if (m_drawer->m_pDC->GetSafeHdc() != NULL)
+    {
+        m_drawer->m_pDC->GetClipBox(&old_rect);     //获取上次的绘图区域
+
+        CRgn rgn;
+        rgn.CreateRectRgnIndirect(rect);
+        m_drawer->m_pDC->SelectClipRgn(&rgn);
+    }
+
+    //设置GDI+绘图区域
+    if (!gdi_only && m_drawer->m_pGraphics != nullptr)
+        m_drawer->m_pGraphics->SetClip(CGdiPlusTool::CRectToGdiplusRect(rect));
+
+    return old_rect;
+}
+
+void DrawAreaGuard::ResetDrawArea(bool gdi_only)
+{
+    if (m_drawer->m_pDC->GetSafeHdc() != NULL)
+        m_drawer->m_pDC->SelectClipRgn(nullptr);
+
+    if (!gdi_only && m_drawer->m_pGraphics != nullptr)
+        m_drawer->m_pGraphics->ResetClip();
 }

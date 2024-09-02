@@ -23,5 +23,9 @@ private:
     static void TestTagParse();
     static void TestStringSplit();
     static void TestRating();
+    static void TestCueSave();
+    static void TestFilePathHelper();
+    static void TestStringToInt();
+    static void TestChinesePingyinMatch();
 };
 

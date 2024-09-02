@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "MusicPlayer2.h"
 #include "CTabCtrlEx.h"
+#include "TabDlg.h"
 
 
 // CTabCtrlEx
@@ -19,7 +20,7 @@ CTabCtrlEx::~CTabCtrlEx()
 {
 }
 
-void CTabCtrlEx::AddWindow(CWnd* pWnd, LPCTSTR lable_text)
+void CTabCtrlEx::AddWindow(CWnd* pWnd, LPCTSTR lable_text, IconMgr::IconType icon_type)
 {
 	if (pWnd == nullptr || pWnd->GetSafeHwnd() == NULL)
 		return;
@@ -30,6 +31,8 @@ void CTabCtrlEx::AddWindow(CWnd* pWnd, LPCTSTR lable_text)
 	pWnd->MoveWindow(m_tab_rect);
 
 	m_tab_list.push_back(pWnd);
+    if (icon_type != IconMgr::IconType::IT_NO_ICON)
+        m_icon_list.push_back(icon_type);
 }
 
 void CTabCtrlEx::SetCurTab(int index)
@@ -55,11 +58,20 @@ void CTabCtrlEx::SetCurTab(int index)
     CTabDlg* pTabWnd = dynamic_cast<CTabDlg*>(m_tab_list[index]);
     if (pTabWnd != nullptr)
         pTabWnd->OnTabEntered();
+
+    if (m_last_tab_index != index && m_last_tab_index >= 0 && m_last_tab_index < static_cast<int>(m_tab_list.size()))
+    {
+        CTabDlg* pLastTabWnd = dynamic_cast<CTabDlg*>(m_tab_list[m_last_tab_index]);
+        if (pLastTabWnd != nullptr)
+            pLastTabWnd->OnTabExited();
+    }
+
+    m_last_tab_index = index;
 }
 
 CWnd* CTabCtrlEx::GetCurrentTab()
 {
-    int cur_tab_index = GetCurSel();
+    size_t cur_tab_index = GetCurSel();
     if (cur_tab_index >= 0 && cur_tab_index < m_tab_list.size())
     {
         return m_tab_list[cur_tab_index];
@@ -74,6 +86,19 @@ void CTabCtrlEx::AdjustTabWindowSize()
     {
         m_tab_list[i]->MoveWindow(m_tab_rect);
     }
+    //为每个标签添加图标
+    if (m_icon_list.empty())
+        return;
+    CSize icon_size = IconMgr::GetIconSize(IconMgr::IconSize::IS_DPI_16);
+    CImageList ImageList;
+    ImageList.Create(icon_size.cx, icon_size.cy, ILC_COLOR32 | ILC_MASK, 2, 2);
+    for (auto icon_type : m_icon_list)
+    {
+        HICON hIcon = theApp.m_icon_mgr.GetHICON(icon_type, IconMgr::IconStyle::IS_OutlinedDark, IconMgr::IconSize::IS_DPI_16);
+        ImageList.Add(hIcon);
+    }
+    SetImageList(&ImageList);
+    ImageList.Detach();
 }
 
 void CTabCtrlEx::CalSubWindowSize()

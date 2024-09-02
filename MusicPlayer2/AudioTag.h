@@ -10,7 +10,7 @@ public:
     ~CAudioTag();
 
     //获取音频文件的标签信息，结果保存在构造函数传递进来的SongInfo结构里，
-    void GetAudioTag();
+    bool GetAudioTag();
 
     void GetAudioTagPropertyMap(std::map<wstring, wstring>& property_map);
 
@@ -19,7 +19,7 @@ public:
     //file_name: 指定保存的专辑封面的文件名，如果为nullptr，则使用默认的文件名
     //file_size: 用来接收获取到的专辑封面文件大小
     //返回值：专辑封面的保存路径
-    wstring GetAlbumCover(int& image_type, wchar_t* file_name = nullptr, size_t* file_size = nullptr);
+    wstring GetAlbumCover(int& image_type, const wchar_t* file_name = nullptr, size_t* file_size = nullptr);
 
     //获取音频的内嵌歌词
     wstring GetAudioLyric();
@@ -53,6 +53,19 @@ public:
 
     //根据一个文件扩展名判断此格式是否支持分级
     static bool IsFileRatingSupport(const wstring& ext);
+
+protected:
+    //获取cue文件的路径
+    static std::wstring GetCuePath(SongInfo& song_info);
+
+    //从cue文件中获取一个cue音轨中的信息
+    static bool GetCueTag(SongInfo& song_info);
+
+    //将一个cue音轨的信息写入cue文件
+    static bool WriteCueTag(SongInfo& song_info);
+
+    //读取一个cue音轨的所有标签属性
+    static bool GetCuePropertyMap(SongInfo& song_info, std::map<wstring, wstring>& property_map);
 
 private:
     SongInfo& m_song_info;

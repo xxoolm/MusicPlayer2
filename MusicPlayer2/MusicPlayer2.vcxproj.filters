@@ -74,9 +74,6 @@
     <Filter Include="对话框类\格式转换相关对话框\编码选项对话框">
       <UniqueIdentifier>{6f54d060-c0cf-4263-b48a-d4ffdc8ab770}</UniqueIdentifier>
     </Filter>
-    <Filter Include="对话框类\RecorderDlg">
-      <UniqueIdentifier>{bc15dc8a-cf52-42cb-ac8f-03c1795d5ab6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="对话框类\SupportedFormatDlg">
       <UniqueIdentifier>{31a26140-6f82-4081-be3f-bd5bc3d369f6}</UniqueIdentifier>
     </Filter>
@@ -213,9 +210,6 @@
     <Filter Include="对话框类\媒体库对话框">
       <UniqueIdentifier>{a3ab564f-8af7-4267-a854-05b454587203}</UniqueIdentifier>
     </Filter>
-    <Filter Include="功能逻辑类\PlaylistMgr">
-      <UniqueIdentifier>{4dbe9b2f-faf2-46dd-8583-24b0eff0b7fa}</UniqueIdentifier>
-    </Filter>
     <Filter Include="对话框类\InputDlg">
       <UniqueIdentifier>{82bbfa03-6c20-4f56-8ad9-7bf00fcd1fe2}</UniqueIdentifier>
     </Filter>
@@ -288,9 +282,6 @@
     <Filter Include="对话框类\媒体库对话框\文件夹浏览">
       <UniqueIdentifier>{b109aca1-cfaf-4f5f-9612-96c66b07d09c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="公共的类\WICFactory">
-      <UniqueIdentifier>{cf55aa05-21b8-4cc2-acfd-17327505e681}</UniqueIdentifier>
-    </Filter>
     <Filter Include="资源文件\bitmaps">
       <UniqueIdentifier>{b15ef7d8-56db-471d-9986-4ca1ba98375a}</UniqueIdentifier>
     </Filter>
@@ -302,9 +293,6 @@
     </Filter>
     <Filter Include="对话框类\BaseDialog">
       <UniqueIdentifier>{81418427-f8ce-49dc-bcfc-5dddf81f8459}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="对话框类\AlbumCoverInfoDlg">
-      <UniqueIdentifier>{92109bff-2233-4c79-afce-77656dc5e247}</UniqueIdentifier>
     </Filter>
     <Filter Include="公共的类\GdiPlusTool">
       <UniqueIdentifier>{a6f42418-9eb9-473e-ac6f-ed9d60ac79c7}</UniqueIdentifier>
@@ -321,17 +309,11 @@
     <Filter Include="对话框类\PropertyDlg\GetTagOnline">
       <UniqueIdentifier>{82073554-8212-45d0-88a5-574a06218222}</UniqueIdentifier>
     </Filter>
-    <Filter Include="对话框类\PropertyDlg\TagFromFileName">
-      <UniqueIdentifier>{05e96306-45ad-47a7-90de-b6ecbdc11cad}</UniqueIdentifier>
-    </Filter>
     <Filter Include="公共的类\ScintillaEditView">
       <UniqueIdentifier>{43bd891c-070b-43ea-8666-f78300c390b6}</UniqueIdentifier>
     </Filter>
     <Filter Include="对话框类\SelectItemDlg">
       <UniqueIdentifier>{beb65fcf-7504-452f-9251-416aee0d7410}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="派生的控件类\CSliderCtrlEx">
-      <UniqueIdentifier>{78135dff-6314-498c-8709-88751407abde}</UniqueIdentifier>
     </Filter>
     <Filter Include="stdafx">
       <UniqueIdentifier>{31edd60e-adb8-4131-88d9-e72e22bddf9b}</UniqueIdentifier>
@@ -363,12 +345,82 @@
     <Filter Include="公共的类\tinyxml2">
       <UniqueIdentifier>{bfba0398-39b7-4eb5-97b5-6b1fa8e31ad7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="功能逻辑类\PlayerCore\FFMPEG">
+      <UniqueIdentifier>{1374b4aa-def4-4b40-8f36-1caf49de536a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="功能逻辑类\AcceleratorRes">
+      <UniqueIdentifier>{dd4724e7-e7cb-4d6e-ad64-d537a8d0dab5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="公共的类\LastFM">
+      <UniqueIdentifier>{accc646e-5e4a-4926-b180-58296096f5c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="公共的类\MD5">
+      <UniqueIdentifier>{061ba298-bcf4-431c-b1fc-d6c692e17753}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="公共的类\CommonData">
+      <UniqueIdentifier>{4913a86a-5b69-423e-b02f-7cf56b8e4aeb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="派生的控件类\HorizontalSplitter">
+      <UniqueIdentifier>{d878d4fa-d8e9-4877-a938-c3aa575f527d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="派生的控件类\EditableListBox">
+      <UniqueIdentifier>{1dbd76ed-58fd-47e0-9639-4519ba00fbd8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="功能逻辑类\StrTable">
+      <UniqueIdentifier>{c5c39608-c515-4919-a6ae-e23b96f114c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="公共的类\FilterHelper">
+      <UniqueIdentifier>{182f9a41-5bb3-4552-b8d4-5d143951d54a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="功能逻辑类\CTagSelBaseDlg">
+      <UniqueIdentifier>{89cbce5a-fb9c-46f0-bedc-fe582d9c3a36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="对话框类\RenameDlg">
+      <UniqueIdentifier>{bd53f37c-760e-4eec-bf7b-755a87ca0565}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="对话框类\FileNameFormDlg">
+      <UniqueIdentifier>{1e50ecfe-c7d9-443c-96cb-cb748a7f1087}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="对话框类\TagFromNameDlg">
+      <UniqueIdentifier>{5ce11d43-a74b-4aed-8ba7-26aa37b9e090}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="功能逻辑类\MenuMgr">
+      <UniqueIdentifier>{737b0ae8-ac0c-4bf1-b335-f027bf625e43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="功能逻辑类\IconMgr">
+      <UniqueIdentifier>{90131507-09eb-4700-86d0-45b3402783f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="对话框类\MoreRecentItemDlg">
+      <UniqueIdentifier>{8275f9f7-1539-4d8d-a8b6-95119418eb6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="公共的类\ChinesePingyinRes">
+      <UniqueIdentifier>{66fcd09f-bfb4-43ed-9b9f-69a6eb0a32af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="功能逻辑类\RecentlyPlayedMgr">
+      <UniqueIdentifier>{4dbe9b2f-faf2-46dd-8583-24b0eff0b7fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="功能逻辑类\UiMediaLibItemMgr">
+      <UniqueIdentifier>{0699c691-a3ac-4f77-952c-e57b1344ba5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="对话框类\媒体库对话框\属性对话框">
+      <UniqueIdentifier>{4fb739d3-9132-4e7c-a046-8cdf7b3436e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="派生的控件类\FontDialogEx">
+      <UniqueIdentifier>{93d51c6b-2246-43a7-9251-d30cbcde6d27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="对话框类\UiSearchBox">
+      <UniqueIdentifier>{9ad9ec41-d87b-446a-b551-36879fbdb950}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
-    <Text Include="Help.txt" />
-    <Text Include="Help_en_us.txt" />
     <Text Include="compile_time.txt" />
+    <Text Include="res\hzpy-utf8.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="res\Acknowledgement.txt">
+      <Filter>资源文件</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -515,9 +567,6 @@
     <ClInclude Include="GaussBlur.h">
       <Filter>公共的类\GaussBlur</Filter>
     </ClInclude>
-    <ClInclude Include="RecorderDlg.h">
-      <Filter>对话框类\RecorderDlg</Filter>
-    </ClInclude>
     <ClInclude Include="LyricSettingsDlg.h">
       <Filter>对话框类\选项设置对话框\LyricSettingsDlg</Filter>
     </ClInclude>
@@ -527,22 +576,13 @@
     <ClInclude Include="SupportedFormatDlg.h">
       <Filter>对话框类\SupportedFormatDlg</Filter>
     </ClInclude>
-    <ClInclude Include="CPlayerUI.h">
-      <Filter>PlayerUI</Filter>
-    </ClInclude>
     <ClInclude Include="CTabCtrlEx.h">
       <Filter>派生的控件类\CTabCtrlEx</Filter>
     </ClInclude>
     <ClInclude Include="CPlayerUIBase.h">
       <Filter>PlayerUI</Filter>
     </ClInclude>
-    <ClInclude Include="CPlayerUI2.h">
-      <Filter>PlayerUI</Filter>
-    </ClInclude>
     <ClInclude Include="IPlayerUI.h">
-      <Filter>PlayerUI</Filter>
-    </ClInclude>
-    <ClInclude Include="CMiniModeUI.h">
       <Filter>PlayerUI</Filter>
     </ClInclude>
     <ClInclude Include="CHotkeyManager.h">
@@ -571,9 +611,6 @@
     </ClInclude>
     <ClInclude Include="AboutDlg.h">
       <Filter>对话框类\AboutDlg</Filter>
-    </ClInclude>
-    <ClInclude Include="CommonData.h">
-      <Filter>公共的类</Filter>
     </ClInclude>
     <ClInclude Include="StaticEx.h">
       <Filter>派生的控件类\StaticEx</Filter>
@@ -615,7 +652,7 @@
       <Filter>对话框类\媒体库对话框</Filter>
     </ClInclude>
     <ClInclude Include="PlaylistMgr.h">
-      <Filter>功能逻辑类\PlaylistMgr</Filter>
+      <Filter>功能逻辑类\RecentlyPlayedMgr</Filter>
     </ClInclude>
     <ClInclude Include="RegFileRelate.h">
       <Filter>功能逻辑类\RegFileRealte</Filter>
@@ -713,17 +750,11 @@
     <ClInclude Include="SpinEdit.h">
       <Filter>派生的控件类\SpinEdit</Filter>
     </ClInclude>
-    <ClInclude Include="WIC.h">
-      <Filter>公共的类\WICFactory</Filter>
-    </ClInclude>
     <ClInclude Include="LyricRelateDlg.h">
       <Filter>对话框类\LyricRelateDlg</Filter>
     </ClInclude>
     <ClInclude Include="BaseDialog.h">
       <Filter>对话框类\BaseDialog</Filter>
-    </ClInclude>
-    <ClInclude Include="AlbumCoverInfoDlg.h">
-      <Filter>对话框类\AlbumCoverInfoDlg</Filter>
     </ClInclude>
     <ClInclude Include="GdiPlusTool.h">
       <Filter>公共的类\GdiPlusTool</Filter>
@@ -761,26 +792,14 @@
     <ClInclude Include="GetTagOnlineDlg.h">
       <Filter>对话框类\PropertyDlg\GetTagOnline</Filter>
     </ClInclude>
-    <ClInclude Include="TagFromFileNameDlg.h">
-      <Filter>对话框类\PropertyDlg\TagFromFileName</Filter>
-    </ClInclude>
     <ClInclude Include="PropertyAdvancedDlg.h">
       <Filter>对话框类\PropertyDlg</Filter>
-    </ClInclude>
-    <ClInclude Include="CPlayerUI3.h">
-      <Filter>PlayerUI</Filter>
     </ClInclude>
     <ClInclude Include="ScintillaEditView.h">
       <Filter>公共的类\ScintillaEditView</Filter>
     </ClInclude>
     <ClInclude Include="SelectItemDlg.h">
       <Filter>对话框类\SelectItemDlg</Filter>
-    </ClInclude>
-    <ClInclude Include="CPlayerUI4.h">
-      <Filter>PlayerUI</Filter>
-    </ClInclude>
-    <ClInclude Include="CPlayerUI5.h">
-      <Filter>PlayerUI</Filter>
     </ClInclude>
     <ClInclude Include="SpectralDataHelper.h">
       <Filter>功能逻辑类\Player</Filter>
@@ -823,6 +842,102 @@
     </ClInclude>
     <ClInclude Include="TinyXml2Helper.h">
       <Filter>公共的类\tinyxml2</Filter>
+    </ClInclude>
+    <ClInclude Include="FfmpegCore.h">
+      <Filter>功能逻辑类\PlayerCore\FFMPEG</Filter>
+    </ClInclude>
+    <ClInclude Include="AcceleratorRes.h">
+      <Filter>功能逻辑类\AcceleratorRes</Filter>
+    </ClInclude>
+    <ClInclude Include="LastFM.h">
+      <Filter>公共的类\LastFM</Filter>
+    </ClInclude>
+    <ClInclude Include="LastFMDataArchive.h">
+      <Filter>公共的类\LastFM</Filter>
+    </ClInclude>
+    <ClInclude Include="md5.h">
+      <Filter>公共的类\MD5</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonData.h">
+      <Filter>公共的类\CommonData</Filter>
+    </ClInclude>
+    <ClInclude Include="FlacEncodeCfgDlg.h">
+      <Filter>对话框类\格式转换相关对话框\编码选项对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="MiniModeUserUi.h">
+      <Filter>PlayerUI</Filter>
+    </ClInclude>
+    <ClInclude Include="HorizontalSplitter.h">
+      <Filter>派生的控件类\HorizontalSplitter</Filter>
+    </ClInclude>
+    <ClInclude Include="EditableListBox.h">
+      <Filter>派生的控件类\EditableListBox</Filter>
+    </ClInclude>
+    <ClInclude Include="StrTable.h">
+      <Filter>功能逻辑类\StrTable</Filter>
+    </ClInclude>
+    <ClInclude Include="FilterHelper.h">
+      <Filter>公共的类\FilterHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonDialogMgr.h">
+      <Filter>公共的类\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="TagSelBaseDlg.h">
+      <Filter>功能逻辑类\CTagSelBaseDlg</Filter>
+    </ClInclude>
+    <ClInclude Include="RenameDlg.h">
+      <Filter>对话框类\RenameDlg</Filter>
+    </ClInclude>
+    <ClInclude Include="TagFromNameDlg.h">
+      <Filter>对话框类\TagFromNameDlg</Filter>
+    </ClInclude>
+    <ClInclude Include="FileNameFormDlg.h">
+      <Filter>对话框类\FileNameFormDlg</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuMgr.h">
+      <Filter>功能逻辑类\MenuMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaTransControlsImpl.h">
+      <Filter>公共的类\MediaTransControls</Filter>
+    </ClInclude>
+    <ClInclude Include="IconMgr.h">
+      <Filter>功能逻辑类\IconMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaLibPlaylistMgr.h">
+      <Filter>功能逻辑类\RecentlyPlayedMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="MoreRecentItemDlg.h">
+      <Filter>对话框类\MoreRecentItemDlg</Filter>
+    </ClInclude>
+    <ClInclude Include="ChinesePingyinRes.h">
+      <Filter>公共的类\ChinesePingyinRes</Filter>
+    </ClInclude>
+    <ClInclude Include="RecentFolderMgr.h">
+      <Filter>功能逻辑类\RecentlyPlayedMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="UiMediaLibItemMgr.h">
+      <Filter>功能逻辑类\UiMediaLibItemMgr</Filter>
+    </ClInclude>
+    <ClInclude Include="SimplePropertiesDlg.h">
+      <Filter>对话框类\媒体库对话框\属性对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="PlaylistPropertiesDlg.h">
+      <Filter>对话框类\媒体库对话框\属性对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="FolderPropertiesDlg.h">
+      <Filter>对话框类\媒体库对话框\属性对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaLibItemPropertiesDlg.h">
+      <Filter>对话框类\媒体库对话框\属性对话框</Filter>
+    </ClInclude>
+    <ClInclude Include="UIWindowCmdHelper.h">
+      <Filter>PlayerUI</Filter>
+    </ClInclude>
+    <ClInclude Include="FontDialogEx.h">
+      <Filter>派生的控件类\FontDialogEx</Filter>
+    </ClInclude>
+    <ClInclude Include="UiSearchBox.h">
+      <Filter>对话框类\UiSearchBox</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -958,9 +1073,6 @@
     <ClCompile Include="GaussBlur.cpp">
       <Filter>公共的类\GaussBlur</Filter>
     </ClCompile>
-    <ClCompile Include="RecorderDlg.cpp">
-      <Filter>对话框类\RecorderDlg</Filter>
-    </ClCompile>
     <ClCompile Include="LyricSettingsDlg.cpp">
       <Filter>对话框类\选项设置对话框\LyricSettingsDlg</Filter>
     </ClCompile>
@@ -970,19 +1082,10 @@
     <ClCompile Include="SupportedFormatDlg.cpp">
       <Filter>对话框类\SupportedFormatDlg</Filter>
     </ClCompile>
-    <ClCompile Include="CPlayerUI.cpp">
-      <Filter>PlayerUI</Filter>
-    </ClCompile>
     <ClCompile Include="CTabCtrlEx.cpp">
       <Filter>派生的控件类\CTabCtrlEx</Filter>
     </ClCompile>
     <ClCompile Include="CPlayerUIBase.cpp">
-      <Filter>PlayerUI</Filter>
-    </ClCompile>
-    <ClCompile Include="CPlayerUI2.cpp">
-      <Filter>PlayerUI</Filter>
-    </ClCompile>
-    <ClCompile Include="CMiniModeUI.cpp">
       <Filter>PlayerUI</Filter>
     </ClCompile>
     <ClCompile Include="CHotkeyManager.cpp">
@@ -1049,7 +1152,7 @@
       <Filter>对话框类\媒体库对话框</Filter>
     </ClCompile>
     <ClCompile Include="PlaylistMgr.cpp">
-      <Filter>功能逻辑类\PlaylistMgr</Filter>
+      <Filter>功能逻辑类\RecentlyPlayedMgr</Filter>
     </ClCompile>
     <ClCompile Include="RegFileRelate.cpp">
       <Filter>功能逻辑类\RegFileRealte</Filter>
@@ -1141,17 +1244,11 @@
     <ClCompile Include="SpinEdit.cpp">
       <Filter>派生的控件类\SpinEdit</Filter>
     </ClCompile>
-    <ClCompile Include="WIC.cpp">
-      <Filter>公共的类\WICFactory</Filter>
-    </ClCompile>
     <ClCompile Include="LyricRelateDlg.cpp">
       <Filter>对话框类\LyricRelateDlg</Filter>
     </ClCompile>
     <ClCompile Include="BaseDialog.cpp">
       <Filter>对话框类\BaseDialog</Filter>
-    </ClCompile>
-    <ClCompile Include="AlbumCoverInfoDlg.cpp">
-      <Filter>对话框类\AlbumCoverInfoDlg</Filter>
     </ClCompile>
     <ClCompile Include="GdiPlusTool.cpp">
       <Filter>公共的类\GdiPlusTool</Filter>
@@ -1186,26 +1283,14 @@
     <ClCompile Include="GetTagOnlineDlg.cpp">
       <Filter>对话框类\PropertyDlg\GetTagOnline</Filter>
     </ClCompile>
-    <ClCompile Include="TagFromFileNameDlg.cpp">
-      <Filter>对话框类\PropertyDlg\TagFromFileName</Filter>
-    </ClCompile>
     <ClCompile Include="PropertyAdvancedDlg.cpp">
       <Filter>对话框类\PropertyDlg</Filter>
-    </ClCompile>
-    <ClCompile Include="CPlayerUI3.cpp">
-      <Filter>PlayerUI</Filter>
     </ClCompile>
     <ClCompile Include="ScintillaEditView.cpp">
       <Filter>公共的类\ScintillaEditView</Filter>
     </ClCompile>
     <ClCompile Include="SelectItemDlg.cpp">
       <Filter>对话框类\SelectItemDlg</Filter>
-    </ClCompile>
-    <ClCompile Include="CPlayerUI4.cpp">
-      <Filter>PlayerUI</Filter>
-    </ClCompile>
-    <ClCompile Include="CPlayerUI5.cpp">
-      <Filter>PlayerUI</Filter>
     </ClCompile>
     <ClCompile Include="SpectralDataHelper.cpp">
       <Filter>功能逻辑类\Player</Filter>
@@ -1249,6 +1334,105 @@
     <ClCompile Include="TinyXml2Helper.cpp">
       <Filter>公共的类\tinyxml2</Filter>
     </ClCompile>
+    <ClCompile Include="FfmpegCore.cpp">
+      <Filter>功能逻辑类\PlayerCore\FFMPEG</Filter>
+    </ClCompile>
+    <ClCompile Include="AcceleratorRes.cpp">
+      <Filter>功能逻辑类\AcceleratorRes</Filter>
+    </ClCompile>
+    <ClCompile Include="LastFMDataArchive.cpp">
+      <Filter>公共的类\LastFM</Filter>
+    </ClCompile>
+    <ClCompile Include="md5.cpp">
+      <Filter>公共的类\MD5</Filter>
+    </ClCompile>
+    <ClCompile Include="LastFM.cpp">
+      <Filter>公共的类\LastFM</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonData.cpp">
+      <Filter>公共的类\CommonData</Filter>
+    </ClCompile>
+    <ClCompile Include="FlacEncodeCfgDlg.cpp">
+      <Filter>对话框类\格式转换相关对话框\编码选项对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniModeUserUi.cpp">
+      <Filter>PlayerUI</Filter>
+    </ClCompile>
+    <ClCompile Include="HorizontalSplitter.cpp">
+      <Filter>派生的控件类\HorizontalSplitter</Filter>
+    </ClCompile>
+    <ClCompile Include="EditableListBox.cpp">
+      <Filter>派生的控件类\EditableListBox</Filter>
+    </ClCompile>
+    <ClCompile Include="StrTable.cpp">
+      <Filter>功能逻辑类\StrTable</Filter>
+    </ClCompile>
+    <ClCompile Include="SongInfo.cpp">
+      <Filter>公共的类\AudioCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="FilterHelper.cpp">
+      <Filter>公共的类\FilterHelper</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonDialogMgr.cpp">
+      <Filter>公共的类\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="TagSelBaseDlg.cpp">
+      <Filter>功能逻辑类\CTagSelBaseDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="RenameDlg.cpp">
+      <Filter>对话框类\RenameDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="TagFromNameDlg.cpp">
+      <Filter>对话框类\TagFromNameDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="FileNameFormDlg.cpp">
+      <Filter>对话框类\FileNameFormDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuMgr.cpp">
+      <Filter>功能逻辑类\MenuMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaTransControlsImpl.cpp">
+      <Filter>公共的类\MediaTransControls</Filter>
+    </ClCompile>
+    <ClCompile Include="IconMgr.cpp">
+      <Filter>功能逻辑类\IconMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaLibPlaylistMgr.cpp">
+      <Filter>功能逻辑类\RecentlyPlayedMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="MoreRecentItemDlg.cpp">
+      <Filter>对话框类\MoreRecentItemDlg</Filter>
+    </ClCompile>
+    <ClCompile Include="ChinesePingyinRes.cpp">
+      <Filter>公共的类\ChinesePingyinRes</Filter>
+    </ClCompile>
+    <ClCompile Include="RecentFolderMgr.cpp">
+      <Filter>功能逻辑类\RecentlyPlayedMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="UiMediaLibItemMgr.cpp">
+      <Filter>功能逻辑类\UiMediaLibItemMgr</Filter>
+    </ClCompile>
+    <ClCompile Include="SimplePropertiesDlg.cpp">
+      <Filter>对话框类\媒体库对话框\属性对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="PlaylistPropertiesDlg.cpp">
+      <Filter>对话框类\媒体库对话框\属性对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="FolderPropertiesDlg.cpp">
+      <Filter>对话框类\媒体库对话框\属性对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaLibItemPropertiesDlg.cpp">
+      <Filter>对话框类\媒体库对话框\属性对话框</Filter>
+    </ClCompile>
+    <ClCompile Include="UIWindowCmdHelper.cpp">
+      <Filter>PlayerUI</Filter>
+    </ClCompile>
+    <ClCompile Include="FontDialogEx.cpp">
+      <Filter>派生的控件类\FontDialogEx</Filter>
+    </ClCompile>
+    <ClCompile Include="UiSearchBox.cpp">
+      <Filter>对话框类\UiSearchBox</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MusicPlayer2.rc">
@@ -1263,6 +1447,18 @@
       <Filter>资源文件\Icons</Filter>
     </None>
     <None Include="..\LICENSE" />
+    <None Include="skins\ui1.xml">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="skins\ui2.xml">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="skins\miniMode\miniMode00.xml">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="language\English.ini">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\AddTag.ico">
@@ -1679,8 +1875,185 @@
     <Image Include="res\volume3_d.ico">
       <Filter>资源文件\Icons</Filter>
     </Image>
+    <Image Include="res\add.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\display_mode.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\display_mode_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
     <Image Include="res\expand.ico">
-      <Filter>资源文件</Filter>
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\link.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\link_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\sort.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\sort_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\unlink.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\unlink_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\internal_lyric_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\shortcut_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\slow_down_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\speed_up_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\switch.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\switch_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\help.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\lyric.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\playlist_dock.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\light_mode.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\play_as_next.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\play_in_playlist.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\copy.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\play_in_folder.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\bitrate.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\reverb.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\hot_key.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\mini_restore.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\mini_restore_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\locate_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\expand_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\fix_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\up_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\album.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\artist.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\bitrate_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\genre.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\star_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\year.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\more_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\recent_songs.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\album_cover_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\play_in_playlist_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\reverb_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\now_playing.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\now_playing_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\karaoke_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\karaoke.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\refresh.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\refresh_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\new_folder.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\new_folder_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\background_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\owner_draw_titlebar_preview.bmp">
+      <Filter>资源文件\bitmaps</Filter>
+    </Image>
+    <Image Include="res\system_titlebar_preview.bmp">
+      <Filter>资源文件\bitmaps</Filter>
+    </Image>
+    <Image Include="res\folder_explore.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\tree_branch_collapsed.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\tree_branch_collapsed_d.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\tree_branch_expanded.ico">
+      <Filter>资源文件\Icons</Filter>
+    </Image>
+    <Image Include="res\tree_branch_expanded_d.ico">
+      <Filter>资源文件\Icons</Filter>
     </Image>
   </ItemGroup>
 </Project>

@@ -4,13 +4,13 @@
 #include "stdafx.h"
 #include "MusicPlayer2.h"
 #include "MediaClassifyDlg.h"
-#include "afxdialogex.h"
 #include "Playlist.h"
 #include "InputDlg.h"
 #include "MusicPlayerCmdHelper.h"
 #include "PropertyDlg.h"
 #include "AddToPlaylistDlg.h"
 #include "SongDataManager.h"
+#include "Player.h"
 
 
 // CMediaClassifyDlg 对话框
@@ -22,69 +22,18 @@ CMediaClassifyDlg::CMediaClassifyDlg(CMediaClassifier::ClassificationType type, 
     m_classifer(type, theApp.m_media_lib_setting_data.hide_only_one_classification)
 {
     if (m_type == CMediaClassifier::CT_ARTIST)
-        m_default_str = CCommon::LoadText(IDS_DEFAULT_ARTIST);
+        m_default_str = theApp.m_str_table.LoadText(L"TXT_EMPTY_ARTIST");
     else if (m_type == CMediaClassifier::CT_ALBUM)
-        m_default_str = CCommon::LoadText(IDS_DEFAULT_ALBUM);
+        m_default_str = theApp.m_str_table.LoadText(L"TXT_EMPTY_ALBUM");
     else if (m_type == CMediaClassifier::CT_GENRE)
-        m_default_str = CCommon::LoadText(IDS_DEFAULT_GENRE);
+        m_default_str = theApp.m_str_table.LoadText(L"TXT_EMPTY_GENRE");
     else if (m_type == CMediaClassifier::CT_YEAR)
-        m_default_str = CCommon::LoadText(IDS_DEFAULT_YEAR);
+        m_default_str = theApp.m_str_table.LoadText(L"TXT_EMPTY_YEAR");
 }
 
 CMediaClassifyDlg::~CMediaClassifyDlg()
 {
 }
-
-void CMediaClassifyDlg::GetSongsSelected(std::vector<wstring>& song_list) const
-{
-    auto& media_list{ m_searched ? m_search_result : m_classifer.GetMeidaList() };
-    song_list.clear();
-    if (m_left_selected)
-    {
-        //如果选中了左侧列表，则把选中分类下的所有曲目的路径添加到song_list中
-        for (int index : m_left_selected_items)
-        {
-            CString str_selected = GetClassifyListSelectedString(index);
-            auto iter = media_list.find(wstring(str_selected));
-            if (iter != media_list.end())
-            {
-                for (const auto& item : iter->second)
-                {
-                    song_list.push_back(item.file_path);
-                }
-            }
-        }
-    }
-    else
-    {
-        //auto iter = media_list.find(wstring(m_classify_selected));
-        //if (iter != media_list.end())
-        //{
-        //    for (int index : m_right_selected_items)
-        //    {
-        //        if (index >= 0 && index < iter->second.size())
-        //            song_list.push_back(iter->second[index].file_path);
-        //    }
-        //}
-
-        for (int index : m_right_selected_items)
-        {
-            wstring file_path = m_song_list_ctrl.GetItemText(index, COL_PATH).GetString();
-            song_list.push_back(file_path);
-        }
-    }
-}
-
-
-//void CMediaClassifyDlg::GetCurrentSongList(std::vector<SongInfo>& song_list) const
-//{
-//    auto& media_list{ m_searched ? m_search_result : m_classifer.GetMeidaList() };
-//    auto iter = media_list.find(wstring(m_classify_selected));
-//    if (iter != media_list.end())
-//    {
-//        song_list = iter->second;
-//    }
-//}
 
 void CMediaClassifyDlg::RefreshData()
 {
@@ -96,13 +45,14 @@ void CMediaClassifyDlg::RefreshData()
     }
 }
 
-bool CMediaClassifyDlg::SetLeftListSel(const wstring& item)
+bool CMediaClassifyDlg::SetLeftListSel(wstring item)
 {
     int list_size = static_cast<int>(m_list_data_left.size());
+    item = CMediaLibPlaylistMgr::GetMediaLibItemDisplayName(m_type, item);  // 将空item转换为用于显示的<未知xxx>
     //遍历左侧列表，寻找匹配匹配的项目
     for (int i = 0; i < list_size; i++)
     {
-        wstring name = m_list_data_left[i][0];
+        const wstring& name = m_list_data_left[i][0];
         if (CCommon::StringCompareNoCase(name, item))
         {
             m_classify_list_ctrl.SetCurSel(i);
@@ -169,7 +119,7 @@ void CMediaClassifyDlg::ShowClassifyList()
         wstring item_name = item.first;
         if (item_name.empty())
         {
-            item_name = m_default_str.GetString();
+            item_name = m_default_str;
         }
 
         CListCtrlEx::RowData row_data;
@@ -204,9 +154,8 @@ void CMediaClassifyDlg::ShowClassifyList()
     auto iter = media_list.find(STR_OTHER_CLASSIFY_TYPE);
     if (iter != media_list.end())
     {
-        CString item_name = CCommon::LoadText(_T("<"), IDS_OTHER, _T(">"));
         CListCtrlEx::RowData row_data;
-        row_data[0] = wstring(item_name);
+        row_data[0] = theApp.m_str_table.LoadText(L"TXT_CLASSIFY_OTHER");
         row_data[1] = std::to_wstring(iter->second.size());
         m_list_data_left.push_back(std::move(row_data));
     }
@@ -218,7 +167,10 @@ void CMediaClassifyDlg::ShowSongList()
     CWaitCursor wait_cursor;
     auto& media_list{ m_searched ? m_search_result : m_classifer.GetMeidaList() };
 
-    m_list_data.clear();
+    m_list_data_right.clear();
+    m_right_items.clear();
+    int highlight_item{ -1 };
+    int right_index{ 0 };
     for (int index : m_left_selected_items)
     {
         CString str_selected = GetClassifyListSelectedString(index);
@@ -228,7 +180,13 @@ void CMediaClassifyDlg::ShowSongList()
         {
             for (const auto& item : iter->second)
             {
-                const SongInfo song{ CSongDataManager::GetInstance().GetSongInfo(item.file_path) };
+                const SongInfo& song{ CSongDataManager::GetInstance().GetSongInfo3(item) };
+                m_right_items.push_back(song);  // 更新显示列表同时存储一份右侧列表SongInfo
+
+                //判断正在播放项
+                if (song.IsSameSong(CPlayer::GetInstance().GetCurrentSongInfo()))
+                    highlight_item = right_index;
+
                 CListCtrlEx::RowData row_data;
                 row_data[COL_TITLE] = song.GetTitle();
                 row_data[COL_ARTIST] = song.GetArtist();
@@ -240,20 +198,27 @@ void CMediaClassifyDlg::ShowSongList()
                 row_data[COL_GENRE] = song.GetGenre();
                 row_data[COL_BITRATE] = (song.bitrate == 0 ? L"-" : std::to_wstring(song.bitrate));
                 row_data[COL_PATH] = song.file_path;
-                m_list_data.push_back(std::move(row_data));
+                m_list_data_right.push_back(std::move(row_data));
+
+                right_index++;
             }
         }
     }
 
-    m_song_list_ctrl.SetListData(&m_list_data);
+    m_song_list_ctrl.SetListData(&m_list_data_right);
+    if (CPlayer::GetInstance().IsMediaLibMode())
+    {
+        m_song_list_ctrl.SetHightItem(highlight_item);
+        m_song_list_ctrl.EnsureVisible(highlight_item, FALSE);
+    }
 }
 
 CString CMediaClassifyDlg::GetClassifyListSelectedString(int index) const
 {
     CString str_selected = m_classify_list_ctrl.GetItemText(index, 0);
-    if (str_selected == m_default_str)
+    if (str_selected == m_default_str.c_str())
         str_selected.Empty();
-    if (str_selected == CCommon::LoadText(_T("<"), IDS_OTHER, _T(">")))
+    if (str_selected == theApp.m_str_table.LoadText(L"TXT_CLASSIFY_OTHER").c_str())
         str_selected = STR_OTHER_CLASSIFY_TYPE;
     return str_selected;
 }
@@ -308,7 +273,7 @@ bool CMediaClassifyDlg::IsItemMatchKeyWord(const SongInfo& song, const wstring& 
 
 bool CMediaClassifyDlg::IsItemMatchKeyWord(const wstring& str, const wstring& key_word)
 {
-    return CCommon::StringFindNoCase(str, key_word) != wstring::npos;
+    return theApp.m_chinese_pingyin_res.IsStringMatchWithPingyin(key_word, str);
 }
 
 void CMediaClassifyDlg::QuickSearch(const wstring& key_word)
@@ -359,23 +324,35 @@ void CMediaClassifyDlg::OnTabEntered()
         CWaitCursor wait_cursor;
         m_classifer.ClassifyMedia();
         ShowClassifyList();
+
+        //设置左侧列表默认选中项
+        if (CPlayer::GetInstance().IsMediaLibMode())
+            SetLeftListSel(CPlayer::GetInstance().GetMedialibItemName());
+
         m_initialized = true;
     }
 }
 
-bool CMediaClassifyDlg::_OnAddToNewPlaylist(std::wstring& playlist_path)
+wstring CMediaClassifyDlg::GetNewPlaylistName() const
 {
     std::wstring default_name;
     //如果选中了左侧列表，则添加到新建播放列表时名称自动填上选中项的名称
     if (m_classify_selected != STR_OTHER_CLASSIFY_TYPE)
         default_name = m_classify_selected;
+    CCommon::FileNameNormalize(default_name);
+    return default_name;
+}
 
-    auto getSongList = [&](std::vector<SongInfo>& song_list)
-    {
-        CMediaLibTabDlg::GetSongsSelected(song_list);
-    };
-    CMusicPlayerCmdHelper cmd_helper(this);
-    return cmd_helper.OnAddToNewPlaylist(getSongList, playlist_path, default_name);
+CMediaClassifier::ClassificationType CMediaClassifyDlg::GetClassificationType() const
+{
+    return m_type;
+}
+
+std::wstring CMediaClassifyDlg::GetClassificationItemName() const
+{
+    if (m_left_selected_items.size() > 1)    // 左侧列表有多个选中项时返回<其他>
+        return STR_OTHER_CLASSIFY_TYPE;
+    return m_classify_selected;
 }
 
 void CMediaClassifyDlg::CalculateClassifyListColumeWidth(std::vector<int>& width)
@@ -388,9 +365,35 @@ void CMediaClassifyDlg::CalculateClassifyListColumeWidth(std::vector<int>& width
     width[0] = rect.Width() - width[1] - theApp.DPI(20) - 1;
 }
 
-const CListCtrlEx& CMediaClassifyDlg::GetSongListCtrl() const
+void CMediaClassifyDlg::GetSongsSelected(std::vector<SongInfo>& song_list) const
 {
-    return m_song_list_ctrl;
+    if (m_left_selected)
+    {
+        //如果选中了左侧列表，则把选中分类下的所有曲目的路径添加到song_list中
+        song_list.clear();
+        auto& media_list{ m_searched ? m_search_result : m_classifer.GetMeidaList() };
+        for (int index : m_left_selected_items)
+        {
+            wstring str_selected{ GetClassifyListSelectedString(index) };
+            auto iter = media_list.find(str_selected);
+            if (iter != media_list.end())
+            {
+                for (const auto& item : iter->second)
+                {
+                    song_list.push_back(item);
+                }
+            }
+        }
+    }
+    else
+    {
+        CMediaLibTabDlg::GetSongsSelected(song_list);
+    }
+}
+
+const vector<SongInfo>& CMediaClassifyDlg::GetSongList() const
+{
+    return m_right_items;
 }
 
 int CMediaClassifyDlg::GetItemSelected() const
@@ -410,14 +413,9 @@ void CMediaClassifyDlg::AfterDeleteFromDisk(const std::vector<SongInfo>& files)
     ShowSongList();
 }
 
-int CMediaClassifyDlg::GetPathColIndex() const
-{
-    return COL_PATH;
-}
-
 wstring CMediaClassifyDlg::GetSelectedString() const
 {
-    return wstring(m_selected_string);
+    return m_selected_string;
 }
 
 void CMediaClassifyDlg::DoDataExchange(CDataExchange* pDX)
@@ -426,6 +424,7 @@ void CMediaClassifyDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_CLASSIFY_LIST, m_classify_list_ctrl);
     DDX_Control(pDX, IDC_SONG_LIST, m_song_list_ctrl);
     DDX_Control(pDX, IDC_MFCEDITBROWSE1, m_search_edit);
+    DDX_Control(pDX, IDC_HSPLITER_STATIC, m_splitter_ctrl);
 }
 
 
@@ -441,7 +440,7 @@ BEGIN_MESSAGE_MAP(CMediaClassifyDlg, CMediaLibTabDlg)
     ON_NOTIFY(HDN_ITEMCLICK, 0, &CMediaClassifyDlg::OnHdnItemclickSongList)
     ON_WM_SIZE()
     ON_WM_DESTROY()
-    ON_COMMAND(ID_DELETE_FROM_DISK, &CMediaClassifyDlg::OnDeleteFromDisk)
+    ON_WM_INITMENU()
 END_MESSAGE_MAP()
 
 
@@ -454,62 +453,65 @@ BOOL CMediaClassifyDlg::OnInitDialog()
 
     // TODO:  在此添加额外的初始化
 
-    CCommon::SetDialogFont(this, theApp.m_pMainWnd->GetFont());     //由于此对话框资源由不同语言共用，所以这里要设置一下字体
-
     //初始化左侧列表
     m_classify_list_ctrl.SetExtendedStyle(m_classify_list_ctrl.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_LABELTIP);
-    CString title_name;
+    wstring title_name;
     if (m_type == CMediaClassifier::CT_ARTIST)
-        title_name = CCommon::LoadText(IDS_ARTIST);
+        title_name = theApp.m_str_table.LoadText(L"TXT_ARTIST");
     else if (m_type == CMediaClassifier::CT_ALBUM)
-        title_name = CCommon::LoadText(IDS_ALBUM);
+        title_name = theApp.m_str_table.LoadText(L"TXT_ALBUM");
     else if (m_type == CMediaClassifier::CT_GENRE)
-        title_name = CCommon::LoadText(IDS_GENRE);
+        title_name = theApp.m_str_table.LoadText(L"TXT_GENRE");
     else if (m_type == CMediaClassifier::CT_YEAR)
-        title_name = CCommon::LoadText(IDS_YEAR);
+        title_name = theApp.m_str_table.LoadText(L"TXT_YEAR");
     else if (m_type == CMediaClassifier::CT_TYPE)
-        title_name = CCommon::LoadText(IDS_FILE_TYPE);
+        title_name = theApp.m_str_table.LoadText(L"TXT_FILE_TYPE");
     else if (m_type == CMediaClassifier::CT_BITRATE)
-        title_name = CCommon::LoadText(IDS_BITRATE);
+        title_name = theApp.m_str_table.LoadText(L"TXT_BITRATE");
     else if (m_type == CMediaClassifier::CT_RATING)
-        title_name = CCommon::LoadText(IDS_RATING);
+        title_name = theApp.m_str_table.LoadText(L"TXT_RATING");
     CRect rc_classify_list;
     m_classify_list_ctrl.GetWindowRect(rc_classify_list);
     std::vector<int> width;
     CalculateClassifyListColumeWidth(width);
-    m_classify_list_ctrl.InsertColumn(0, title_name, LVCFMT_LEFT, width[0]);
-    m_classify_list_ctrl.InsertColumn(1, CCommon::LoadText(IDS_TRACK_TOTAL_NUM), LVCFMT_LEFT, width[1]);
+    m_classify_list_ctrl.InsertColumn(0, title_name.c_str(), LVCFMT_LEFT, width[0]);
+    m_classify_list_ctrl.InsertColumn(1, theApp.m_str_table.LoadText(L"TXT_NUM_OF_TRACK").c_str(), LVCFMT_LEFT, width[1]);
     //ShowClassifyList();
 
     //初始化右侧列表
     m_song_list_ctrl.SetExtendedStyle(m_song_list_ctrl.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_LABELTIP);
     //CRect rc_song_list;
     //m_song_list_ctrl.GetWindowRect(rc_song_list);
-    m_song_list_ctrl.InsertColumn(0, CCommon::LoadText(IDS_TITLE), LVCFMT_LEFT, theApp.DPI(150));
-    m_song_list_ctrl.InsertColumn(1, CCommon::LoadText(IDS_ARTIST), LVCFMT_LEFT, theApp.DPI(100));
-    m_song_list_ctrl.InsertColumn(2, CCommon::LoadText(IDS_ALBUM), LVCFMT_LEFT, theApp.DPI(150));
-    m_song_list_ctrl.InsertColumn(3, CCommon::LoadText(IDS_TRACK_NUM), LVCFMT_LEFT, theApp.DPI(60));
-    m_song_list_ctrl.InsertColumn(4, CCommon::LoadText(IDS_GENRE), LVCFMT_LEFT, theApp.DPI(100));
-    m_song_list_ctrl.InsertColumn(5, CCommon::LoadText(IDS_BITRATE), LVCFMT_LEFT, theApp.DPI(60));
-    m_song_list_ctrl.InsertColumn(6, CCommon::LoadText(IDS_FILE_PATH), LVCFMT_LEFT, theApp.DPI(600));
+    m_song_list_ctrl.InsertColumn(0, theApp.m_str_table.LoadText(L"TXT_TITLE").c_str(), LVCFMT_LEFT, theApp.DPI(150));
+    m_song_list_ctrl.InsertColumn(1, theApp.m_str_table.LoadText(L"TXT_ARTIST").c_str(), LVCFMT_LEFT, theApp.DPI(100));
+    m_song_list_ctrl.InsertColumn(2, theApp.m_str_table.LoadText(L"TXT_ALBUM").c_str(), LVCFMT_LEFT, theApp.DPI(150));
+    m_song_list_ctrl.InsertColumn(3, theApp.m_str_table.LoadText(L"TXT_TRACK_NUM").c_str(), LVCFMT_LEFT, theApp.DPI(60));
+    m_song_list_ctrl.InsertColumn(4, theApp.m_str_table.LoadText(L"TXT_GENRE").c_str(), LVCFMT_LEFT, theApp.DPI(100));
+    m_song_list_ctrl.InsertColumn(5, theApp.m_str_table.LoadText(L"TXT_BITRATE").c_str(), LVCFMT_LEFT, theApp.DPI(60));
+    m_song_list_ctrl.InsertColumn(6, theApp.m_str_table.LoadText(L"TXT_FILE_PATH").c_str(), LVCFMT_LEFT, theApp.DPI(600));
     m_song_list_ctrl.SetCtrlAEnable(true);
 
     if (m_type == CMediaClassifier::CT_ARTIST)
-        m_search_edit.SetCueBanner(CCommon::LoadText(IDS_SEARCH_ARTIST), TRUE);
+        m_search_edit.SetCueBanner(theApp.m_str_table.LoadText(L"TXT_SEARCH_PROMPT_ARTIST").c_str(), TRUE);
     else if (m_type == CMediaClassifier::CT_ALBUM)
-        m_search_edit.SetCueBanner(CCommon::LoadText(IDS_SEARCH_ALBUM), TRUE);
+        m_search_edit.SetCueBanner(theApp.m_str_table.LoadText(L"TXT_SEARCH_PROMPT_ALBUM").c_str(), TRUE);
     else if (m_type == CMediaClassifier::CT_GENRE)
-        m_search_edit.SetCueBanner(CCommon::LoadText(IDS_SEARCH_GENRE), TRUE);
+        m_search_edit.SetCueBanner(theApp.m_str_table.LoadText(L"TXT_SEARCH_PROMPT_GENRE").c_str(), TRUE);
     else if (m_type == CMediaClassifier::CT_YEAR)
-        m_search_edit.SetCueBanner(CCommon::LoadText(IDS_SEARCH_YEAR), TRUE);
+        m_search_edit.SetCueBanner(theApp.m_str_table.LoadText(L"TXT_SEARCH_PROMPT_YEAR").c_str(), TRUE);
     else if (m_type == CMediaClassifier::CT_TYPE)
-        m_search_edit.SetCueBanner(CCommon::LoadText(IDS_SEARCH_FILE_TYPE), TRUE);
+        m_search_edit.SetCueBanner(theApp.m_str_table.LoadText(L"TXT_SEARCH_PROMPT_FILE_TYPE").c_str(), TRUE);
     else if (m_type == CMediaClassifier::CT_BITRATE)
-        m_search_edit.SetCueBanner(CCommon::LoadText(IDS_SEARCH_BITRATE), TRUE);
+        m_search_edit.SetCueBanner(theApp.m_str_table.LoadText(L"TXT_SEARCH_PROMPT_BITRATE").c_str(), TRUE);
     else if (m_type == CMediaClassifier::CT_RATING)
         m_search_edit.EnableWindow(FALSE);
     else
-        m_search_edit.SetCueBanner(CCommon::LoadText(IDS_SEARCH_HERE), TRUE);
+        m_search_edit.SetCueBanner(theApp.m_str_table.LoadText(L"TXT_SEARCH_PROMPT").c_str(), TRUE);
+
+    //初始化分隔条
+    m_splitter_ctrl.AttachCtrlAsLeftPane(IDC_CLASSIFY_LIST);
+    m_splitter_ctrl.AttachCtrlAsLeftPane(IDC_MFCEDITBROWSE1);
+    m_splitter_ctrl.AttachCtrlAsRightPane(IDC_SONG_LIST);
 
     return TRUE;  // return TRUE unless you set the focus to a control
                   // 异常: OCX 属性页应返回 FALSE
@@ -535,7 +537,7 @@ void CMediaClassifyDlg::OnNMRClickClassifyList(NMHDR* pNMHDR, LRESULT* pResult)
     if (!m_left_selected_items.empty())
     {
         //弹出右键菜单
-        CMenu* pMenu = theApp.m_menu_set.m_media_lib_popup_menu.GetSubMenu(0);
+        CMenu* pMenu = theApp.m_menu_mgr.GetMenu(MenuMgr::LibLeftMenu);
         ASSERT(pMenu != nullptr);
         if (pMenu != nullptr)
         {
@@ -599,7 +601,7 @@ void CMediaClassifyDlg::OnNMRClickSongList(NMHDR* pNMHDR, LRESULT* pResult)
     if (!m_right_selected_items.empty())
     {
         //弹出右键菜单
-        CMenu* pMenu = theApp.m_menu_set.m_media_lib_popup_menu.GetSubMenu(1);
+        CMenu* pMenu = theApp.m_menu_mgr.GetMenu(MenuMgr::LibRightMenu);
         ASSERT(pMenu != nullptr);
         if (pMenu != nullptr)
         {
@@ -609,39 +611,6 @@ void CMediaClassifyDlg::OnNMRClickSongList(NMHDR* pNMHDR, LRESULT* pResult)
 
     *pResult = 0;
 }
-
-
-//void CMediaClassifyDlg::OnInitMenu(CMenu* pMenu)
-//{
-//    CMediaLibTabDlg::OnInitMenu(pMenu);
-//
-//    //bool select_valid;
-//    //if (m_left_selected)
-//    //    select_valid = !m_left_selected_items.empty();
-//    //else
-//    //    select_valid = !m_right_selected_items.empty();
-//
-//    //pMenu->EnableMenuItem(ID_PLAY_ITEM, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//    //pMenu->EnableMenuItem(ID_PLAY_ITEM_IN_FOLDER_MODE, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//    //pMenu->EnableMenuItem(ID_ADD_TO_DEFAULT_PLAYLIST, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//    //pMenu->EnableMenuItem(ID_ADD_TO_MY_FAVOURITE, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//    //for (UINT id = ID_ADD_TO_MY_FAVOURITE + 1; id < ID_ADD_TO_MY_FAVOURITE + ADD_TO_PLAYLIST_MAX_SIZE; id++)
-//    //{
-//    //    pMenu->EnableMenuItem(id, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//    //}
-//    //pMenu->EnableMenuItem(ID_ADD_TO_NEW_PLAYLIST, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//    //pMenu->EnableMenuItem(ID_ADD_TO_NEW_PALYLIST_AND_PLAY, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//    //pMenu->EnableMenuItem(ID_EXPLORE_ONLINE, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//    //pMenu->EnableMenuItem(ID_FORMAT_CONVERT, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//    //pMenu->EnableMenuItem(ID_EXPLORE_TRACK, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//    //pMenu->EnableMenuItem(ID_ITEM_PROPERTY, MF_BYCOMMAND | (select_valid ? MF_ENABLED : MF_GRAYED));
-//
-//    pMenu->SetDefaultItem(ID_PLAY_ITEM);
-//
-//    // TODO: 在此处添加消息处理程序代码
-//}
-
-
 
 
 void CMediaClassifyDlg::OnNMDblclkClassifyList(NMHDR* pNMHDR, LRESULT* pResult)
@@ -682,37 +651,38 @@ void CMediaClassifyDlg::OnHdnItemclickSongList(NMHDR* pNMHDR, LRESULT* pResult)
         //对右侧列表排序
         if (m_left_selected_items.size() == 1)  //仅当左侧列表选中了一项时处理
         {
-            auto iter = m_classifer.GetMeidaList().find(wstring(m_classify_selected));
-            if (iter != m_classifer.GetMeidaList().end())
+            auto& media_list{ m_searched ? m_search_result : m_classifer.GetMeidaList() };
+            auto iter = media_list.find(m_classify_selected);
+            if (iter != media_list.end())
             {
                 switch (phdr->iItem)
                 {
                 case CMediaClassifyDlg::COL_TITLE:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return CCommon::StringCompareInLocalLanguage(a.title, b.title) < 0; else return CCommon::StringCompareInLocalLanguage(a.title, b.title) > 0; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByTitle : SongInfo::ByTitleDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_ARTIST:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return CCommon::StringCompareInLocalLanguage(a.artist, b.artist) < 0; else return CCommon::StringCompareInLocalLanguage(a.artist, b.artist) > 0; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByArtist : SongInfo::ByArtistDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_ALBUM:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return CCommon::StringCompareInLocalLanguage(a.album, b.album) < 0; else return CCommon::StringCompareInLocalLanguage(a.album, b.album) > 0; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByAlbum : SongInfo::ByAlbumDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_TRACK:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return a.track < b.track; else return a.track > b.track; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByTrack : SongInfo::ByTrackDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_GENRE:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return CCommon::StringCompareInLocalLanguage(a.genre, b.genre) < 0; else return CCommon::StringCompareInLocalLanguage(a.genre, b.genre) > 0; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByGenre : SongInfo::ByGenreDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_BITRATE:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return a.bitrate < b.bitrate; else return a.bitrate > b.bitrate; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByBitrate : SongInfo::ByBitrateDecending));
                     ShowSongList();
                     break;
                 case CMediaClassifyDlg::COL_PATH:
-                    std::sort(iter->second.begin(), iter->second.end(), [](const SongInfo& a, const SongInfo& b) { if (ascending) return CCommon::StringCompareInLocalLanguage(a.file_path, b.file_path) < 0; else return CCommon::StringCompareInLocalLanguage(a.file_path, b.file_path) > 0; });
+                    std::sort(iter->second.begin(), iter->second.end(), (ascending ? SongInfo::ByPath : SongInfo::ByPathDecending));
                     ShowSongList();
                     break;
                 default:
@@ -749,18 +719,17 @@ void CMediaClassifyDlg::OnDestroy()
     m_classifer.ClearResult();
 }
 
-//
-//void CMediaClassifyDlg::OnDeleteFromDisk()
-//{
-//    // TODO: 在此添加命令处理程序代码
-//    vector<SongInfo> songs_selected;
-//    GetSongsSelected(songs_selected);
-//    CMusicPlayerCmdHelper helper;
-//    if (helper.DeleteSongsFromDisk(songs_selected))
-//    {
-//        //删除成功，则刷新列表
-//        m_classifer.RemoveFiles(songs_selected);
-//        ShowSongList();
-//    }
-//
-//}
+
+void CMediaClassifyDlg::OnInitMenu(CMenu* pMenu)
+{
+    CMediaLibTabDlg::OnInitMenu(pMenu);
+
+    //设置“添加到播放列表”子菜单状态
+    //未选中状态不会弹出右键菜单，因此“添加到播放列表”子菜单全部设置为可用状态
+    for (UINT id = ID_ADD_TO_DEFAULT_PLAYLIST; id < ID_ADD_TO_MY_FAVOURITE + ADD_TO_PLAYLIST_MAX_SIZE + 1; id++)
+    {
+        pMenu->EnableMenuItem(id, MF_BYCOMMAND | MF_ENABLED);
+    }
+    pMenu->EnableMenuItem(ID_ADD_TO_NEW_PLAYLIST, MF_BYCOMMAND | MF_ENABLED);
+    pMenu->EnableMenuItem(ID_ADD_TO_OTHER_PLAYLIST, MF_BYCOMMAND | MF_ENABLED);
+}

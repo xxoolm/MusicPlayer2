@@ -1,7 +1,5 @@
 ﻿#pragma once
 #include "tinyxml2/tinyxml2.h"
-#include <string>
-#include <functional>
 
 class CTinyXml2Helper
 {
@@ -24,4 +22,7 @@ public:
     static const char* ElementText(tinyxml2::XMLElement* ele);
 
     static bool StringToBool(const char* str);
+
+    static void GetElementAttributeBool(tinyxml2::XMLElement* ele, const char* attr, bool& value);
+    static void GetElementAttributeInt(tinyxml2::XMLElement* ele, const char* attr, int& value);
 };

@@ -1,66 +1,36 @@
 ﻿#pragma once
+#include "SongInfo.h"
 
-#include "Common.h"
+enum class PlaybackStatus
+{
+    Closed = 0,
+    Changing = 1,
+    Stopped = 2,
+    Playing = 3,
+    Paused = 4,
+};
 
-#ifndef DISABLE_MEDIA_TRANS_CONTROLS
-#include <sdkddkver.h>
-#include <atlbase.h>
-#include <windows.media.h>
-#include <string>
-
-using namespace ABI::Windows::Media;
+class MediaTransControlsImpl;
 
 class MediaTransControls {
 public:
-    MediaTransControls(void) {
-        this->controls = nullptr;
-        this->updater = nullptr;
-        this->music = nullptr;
-    }
-    ~MediaTransControls(void) {
-        if (controls && m_EventRegistrationToken.value) {
-            controls->remove_ButtonPressed(m_EventRegistrationToken);
-        }
-    }
-    /**
-     * @brief Intitialize the interface
-     * @param main
-     * @return true if initalized
-    */
-    bool Init();
-    void loadThumbnail(wstring fn);
-    void loadThumbnail(const BYTE* content, size_t size);
-    void loadThumbnailFromUrl(wstring url);
-    bool IsActive();
-    void ClearAll();
-    void UpdateControls(Command cmd);
-    void UpdateControlsMetadata(const wstring& title, const wstring& artist);
-protected:
-    CComPtr<ISystemMediaTransportControls> controls;
-    CComPtr<ISystemMediaTransportControlsDisplayUpdater> updater;
-    CComPtr<IMusicDisplayProperties> music;
-    EventRegistrationToken m_EventRegistrationToken;
-    void UpdateTitle(wstring title);
-    void UpdateArtist(wstring artist);
-    void OnButtonPressed(SystemMediaTransportControlsButton button);
-    bool IsURL(wstring s);
-    bool m_initailzed = false;
-};
-
-#else
-
-class MediaTransControls
-{
-public:
     MediaTransControls();
-    bool Init();
-    void loadThumbnail(wstring fn);
+    ~MediaTransControls();
+    bool InitSMTC(bool enable);
+    void loadThumbnail(const wstring& fn);
     void loadThumbnail(const BYTE* content, size_t size);
-    void loadThumbnailFromUrl(wstring url);
     bool IsActive();
     void ClearAll();
-    void UpdateControls(Command cmd);
-    void UpdateControlsMetadata(const wstring& title, const wstring& artist);
-};
+    void UpdateControls(PlaybackStatus status);
+    void UpdateControlsMetadata(const SongInfo& song);
+    /// Update current time, in milliseconds
+    void UpdatePosition(int64_t postion, bool force = false);
+    /// Update current speed
+    void UpdateSpeed(float speed);
 
+#ifndef DISABLE_MEDIA_TRANS_CONTROLS
+private:
+    std::mutex m_mutex;     // 使用pImpl指针期间锁定此互斥量
+    std::unique_ptr<MediaTransControlsImpl> pImpl;
 #endif
+};

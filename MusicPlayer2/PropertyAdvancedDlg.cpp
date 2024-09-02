@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "MusicPlayer2.h"
 #include "PropertyAdvancedDlg.h"
-#include "afxdialogex.h"
+#include "AudioTag.h"
 
 
 // CPropertyAdvancedDlg 对话框
@@ -85,19 +85,16 @@ void CPropertyAdvancedDlg::ShowInfo()
     if (!m_batch_edit)      //批量编辑（多选）模式下不支持显示高级标签信息
     {
         SongInfo cur_song = CurrentSong();
-        if (!cur_song.is_cue)
-        {
-            CAudioTag audio_tag(cur_song);
-            std::map<wstring, wstring> property_map;
-            audio_tag.GetAudioTagPropertyMap(property_map);
+        CAudioTag audio_tag(cur_song);
+        std::map<wstring, wstring> property_map;
+        audio_tag.GetAudioTagPropertyMap(property_map);
 
-            int index{};
-            for (const auto& prop : property_map)
-            {
-                m_list_ctrl.InsertItem(index, prop.first.c_str());
-                m_list_ctrl.SetItemText(index, 1, prop.second.c_str());
-                index++;
-            }
+        int index{};
+        for (const auto& prop : property_map)
+        {
+            m_list_ctrl.InsertItem(index, prop.first.c_str());
+            m_list_ctrl.SetItemText(index, 1, prop.second.c_str());
+            index++;
         }
     }
 }
@@ -126,12 +123,10 @@ BOOL CPropertyAdvancedDlg::OnInitDialog()
 
     // TODO:  在此添加额外的初始化
 
-    CCommon::SetDialogFont(this, theApp.m_pMainWnd->GetFont());     //由于此对话框资源由不同语言共用，所以这里要设置一下字体
-
     //初始化列表
     m_list_ctrl.SetExtendedStyle(m_list_ctrl.GetExtendedStyle() | LVS_EX_GRIDLINES);
-    m_list_ctrl.InsertColumn(0, CCommon::LoadText(IDS_ITEM), LVCFMT_LEFT, theApp.DPI(100));
-    m_list_ctrl.InsertColumn(1, CCommon::LoadText(IDS_VLAUE), LVCFMT_LEFT, theApp.DPI(200));
+    m_list_ctrl.InsertColumn(0, theApp.m_str_table.LoadText(L"TXT_ITEM").c_str(), LVCFMT_LEFT, theApp.DPI(100));
+    m_list_ctrl.InsertColumn(1, theApp.m_str_table.LoadText(L"TXT_VALUE").c_str(), LVCFMT_LEFT, theApp.DPI(200));
 
     return TRUE;  // return TRUE unless you set the focus to a control
                   // 异常: OCX 属性页应返回 FALSE
@@ -142,7 +137,7 @@ void CPropertyAdvancedDlg::OnCopyText()
 {
     // TODO: 在此添加命令处理程序代码
     if (!CCommon::CopyStringToClipboard(m_selected_string))
-        MessageBox(CCommon::LoadText(IDS_COPY_CLIPBOARD_FAILED), NULL, MB_ICONWARNING);
+        MessageBox(theApp.m_str_table.LoadText(L"MSG_COPY_CLIPBOARD_FAILED").c_str(), NULL, MB_ICONWARNING);
 }
 
 
@@ -154,7 +149,7 @@ void CPropertyAdvancedDlg::OnNMRClickList1(NMHDR *pNMHDR, LRESULT *pResult)
     m_item_selected = pNMItemActivate->iItem;
 
     //弹出右键菜单
-    CMenu* pMenu = theApp.m_menu_set.m_property_menu.GetSubMenu(0);
+    CMenu* pMenu = theApp.m_menu_mgr.GetMenu(MenuMgr::PropertyAdvMenu);
     ASSERT(pMenu != nullptr);
     if (pMenu != nullptr)
     {

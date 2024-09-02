@@ -24,6 +24,8 @@ public:
     void SetDarkMode(bool dark_mode);		//设置搜索框是否为黑色模式
     void ApplySearchBoxTransparentChanged();
 
+    bool IsSearchBoxAvailable() const;
+
 private:
     struct CortanaUIColors		//界面颜色
     {
@@ -64,8 +66,6 @@ private:
 
     CRect TextRect() const;
     CRect CoverRect() const;
-
-    double GetScrollTextPixel() const;
 
 private:
     bool m_enable;

@@ -36,7 +36,7 @@ wstring CInternetCommon::URLEncode(const wstring & wstr)
 	return result;
 }
 
-bool CInternetCommon::GetURL(const wstring & str_url, wstring & result)
+bool CInternetCommon::GetURL(const wstring & str_url, wstring & result, bool custom_ua, bool allow_other_codes)
 {
     wstring log_info;
     log_info = L"http get: " + str_url;
@@ -44,13 +44,16 @@ bool CInternetCommon::GetURL(const wstring & str_url, wstring & result)
 
 	bool sucessed{ false };
 	CInternetSession session{};
+    if (custom_ua) {
+        session.SetOption(INTERNET_OPTION_USER_AGENT, (LPVOID)L"MuiscPlayer2" APP_VERSION, wcslen(L"MuiscPlayer2" APP_VERSION) * sizeof(wchar_t));
+    }
 	CHttpFile* pfile{};
 	try
 	{
 		pfile = (CHttpFile *)session.OpenURL(str_url.c_str());
 		DWORD dwStatusCode;
 		pfile->QueryInfoStatusCode(dwStatusCode);
-		if (dwStatusCode == HTTP_STATUS_OK)
+		if (allow_other_codes || dwStatusCode == HTTP_STATUS_OK)
 		{
 			CString content;
 			CString data;
@@ -83,8 +86,18 @@ bool CInternetCommon::GetURL(const wstring & str_url, wstring & result)
 	return sucessed;
 }
 
+int CInternetCommon::HttpPost(const wstring& str_url, wstring& result) {
+    string body;
+    wstring headers;
+    return HttpPost(str_url, result, body, headers);
+}
 
-int CInternetCommon::HttpPost(const wstring & str_url, wstring & result)
+int CInternetCommon::HttpPost(const wstring& str_url, wstring& result, const wstring& body, wstring& headers, bool custom_ua) {
+    const auto& tmp = CCommon::UnicodeToStr(body, CodeType::UTF8_NO_BOM);
+    return HttpPost(str_url, result, tmp, headers, custom_ua);
+}
+
+int CInternetCommon::HttpPost(const wstring & str_url, wstring & result, const string& body, wstring& headers, bool custom_ua)
 {
     wstring log_info;
     log_info = L"http post: " + str_url;
@@ -97,6 +110,10 @@ int CInternetCommon::HttpPost(const wstring & str_url, wstring & result)
 	CString strObject;
 	DWORD dwServiceType;
 	INTERNET_PORT nPort;
+
+    if (custom_ua) {
+        session.SetOption(INTERNET_OPTION_USER_AGENT, (LPVOID)L"MuiscPlayer2" APP_VERSION, wcslen(L"MuiscPlayer2" APP_VERSION) * sizeof(wchar_t));
+    }
 
 	AfxParseURL(str_url.c_str(), dwServiceType, strServer, strObject, nPort);
 
@@ -111,8 +128,8 @@ int CInternetCommon::HttpPost(const wstring & str_url, wstring & result)
 		pFile = pConnection->OpenRequest(_T("POST"), strObject,
 			NULL, 1, NULL, NULL,
 			(dwServiceType == AFX_INET_SERVICE_HTTP ? NORMAL_REQUEST : SECURE_REQUEST));
-
-		pFile->SendRequest(NULL, 0, NULL, 0);
+        
+		pFile->SendRequest(headers.empty() ? NULL : headers.c_str(), headers.size(), body.empty() ? NULL : (LPVOID)body.c_str(), body.size());
 
 		CString content;
 		CString data;
@@ -335,8 +352,8 @@ double CInternetCommon::StringSimilarDegree_LD(const wstring & srcString, const 
 	//if (n == 0 || m == 0) return 0.0;	//如果其中一个字符串长度为0，则相似度为0
 
 	// Step 2，给表的第1行和第1列填入数字
-	for (int i = 0; i <= n; d[i][0] = i++);
-	for (int j = 0; j <= m; d[0][j] = j++);
+	for (int i{}; i <= n; ++i) d[i][0] = i;
+	for (int j{}; j <= m; ++j) d[0][j] = j;
 	// Step 3
 	for (int i = 1; i <= n; i++)
 	{
@@ -456,13 +473,13 @@ CInternetCommon::ItemInfo CInternetCommon::SearchSongAndGetMatched(const wstring
 	//设置搜索关键字
 	wstring search_result;		//查找歌曲返回的结果
 	wstring keyword;		//查找的关键字
-	if (title == CCommon::LoadText(IDS_DEFAULT_TITLE).GetString() || title.empty())		//如果没有标题信息，就把文件名设为搜索关键字
+    if (title.empty() || theApp.m_str_table.LoadText(L"TXT_EMPTY_TITLE") == title)            // 如果没有标题信息，就把文件名设为搜索关键字
 	{
 		keyword = file_name;
 		size_t index = keyword.rfind(L'.');		//查找最后一个点
 		keyword = keyword.substr(0, index);		//去掉扩展名
 	}
-	else if (artist == CCommon::LoadText(IDS_DEFAULT_ARTIST).GetString() || artist.empty())	//如果有标题信息但是没有艺术家信息，就把标题设为搜索关键字
+    else if (artist.empty() || theApp.m_str_table.LoadText(L"TXT_EMPTY_ARTIST") == artist)    //如果有标题信息但是没有艺术家信息，就把标题设为搜索关键字
 	{
 		keyword = title;
 	}
@@ -479,7 +496,10 @@ CInternetCommon::ItemInfo CInternetCommon::SearchSongAndGetMatched(const wstring
 	if (rtn != 0)
 	{
 		if(message)
-			AfxMessageBox(CCommon::LoadText(IDS_NETWORK_CONNECTION_FAILED), NULL, MB_ICONWARNING);
+		{
+			const wstring& info = theApp.m_str_table.LoadText(L"MSG_NETWORK_CONNECTION_FAILED");
+			AfxMessageBox(info.c_str(), NULL, MB_ICONWARNING);
+		}
         if (result != nullptr)
             *result = DR_NETWORK_ERROR;
 
@@ -492,7 +512,10 @@ CInternetCommon::ItemInfo CInternetCommon::SearchSongAndGetMatched(const wstring
 	if (down_list.empty())
 	{
 		if (message)
-			AfxMessageBox(CCommon::LoadText(IDS_CANNOT_FIND_THIS_SONG), NULL, MB_ICONWARNING);
+		{
+			const wstring& info = theApp.m_str_table.LoadText(L"MSG_NETWORK_CANNOT_FIND_THIS_SONG");
+			AfxMessageBox(info.c_str(), NULL, MB_ICONWARNING);
+		}
         if (result != nullptr)
             *result = DR_DOWNLOAD_ERROR;
         return CInternetCommon::ItemInfo();
@@ -502,16 +525,19 @@ CInternetCommon::ItemInfo CInternetCommon::SearchSongAndGetMatched(const wstring
 	wstring _title = title;
 	wstring _artist = artist;
 	wstring _album = album;
-	if (title == CCommon::LoadText(IDS_DEFAULT_TITLE).GetString()) _title.clear();
-	if (artist == CCommon::LoadText(IDS_DEFAULT_ARTIST).GetString()) _artist.clear();
-	if (album == CCommon::LoadText(IDS_DEFAULT_ALBUM).GetString()) _album.clear();
+    if (theApp.m_str_table.LoadText(L"TXT_EMPTY_TITLE") == title) _title.clear();
+    if (theApp.m_str_table.LoadText(L"TXT_EMPTY_ARTIST") == artist) _artist.clear();
+    if (theApp.m_str_table.LoadText(L"TXT_EMPTY_ALBUM") == album) _album.clear();
 	if (_title.empty())
 		_title = keyword;
 	int best_matched = CInternetCommon::SelectMatchedItem(down_list, _title, _artist, _album, file_name, true);
 	if (best_matched < 0)
 	{
 		if (message)
-			AfxMessageBox(CCommon::LoadText(IDS_CANNOT_FIND_THIS_SONG), NULL, MB_ICONWARNING);
+		{
+			const wstring& info = theApp.m_str_table.LoadText(L"MSG_NETWORK_CANNOT_FIND_THIS_SONG");
+			AfxMessageBox(info.c_str(), NULL, MB_ICONWARNING);
+		}
         if (result != nullptr)
             *result = DR_DOWNLOAD_ERROR;
         return CInternetCommon::ItemInfo();

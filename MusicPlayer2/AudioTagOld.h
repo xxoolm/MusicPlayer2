@@ -14,7 +14,7 @@ public:
 	//file_path：mp3文件的路径
 	//text_cut_off：如果写入的文本长度超过ID3V1可容纳的长度，则过长的文本将会被截断，并将text_cut_off置为true
 	//返回值：成功返回true，否则返回false
-	static bool WriteMp3Tag(LPCTSTR file_path, const SongInfo& song_info, bool& text_cut_off);
+	static bool WriteMp3Tag(LPCTSTR file_path, SongInfo song_info, bool& text_cut_off);
 
     bool GetTagDefault();       //通过BASS获取标签起始位置手动解析标签
     string GetAlbumCoverDefault(int& image_type);     //通过BASS获取id3v2标签的位置手动解析专辑封面
@@ -36,7 +36,7 @@ private:
 
 
 	//获取ID3V2标签区域的内容
-	string GetID3V2TagContents();
+	string GetID3V2TagContents() const;
 
 	//从ID3V2标签区域的内容中提取出指定的ID3标签
 	//tag_contents：整个标签区域的内容

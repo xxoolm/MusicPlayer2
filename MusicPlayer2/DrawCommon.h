@@ -1,10 +1,11 @@
 ﻿//这个类用于定义用于绘图的函数
 #pragma once
 
-enum class Alignment	//对齐方式
+enum class Alignment    //对齐方式
 {
     LEFT,
     RIGHT,
+    AUTO,   // 用于歌词对齐选项，原来的居中，支持卡拉OK显示
     CENTER
 };
 
@@ -16,6 +17,7 @@ enum ImageType
     IT_BMP
 };
 
+class DrawAreaGuard;
 
 class CDrawCommon
 {
@@ -37,17 +39,19 @@ public:
         int freez{};			//当该变量大于0时，文本不滚动，直到小于等于0为止
         bool dir_changed{ false };	//如果方向发生了变化，则为true
         CString last_string;        //上一次绘制的文本
+
+        void Reset();
     };
 
-    CDrawCommon();
-    ~CDrawCommon();
+    friend class DrawAreaGuard;
 
-    virtual void Create(CDC* pDC, CWnd* pMainWnd = nullptr);
-    void Create(CDC* pDC, Gdiplus::Graphics* pGraphics, CWnd* pMainWnd = nullptr);
-    //void SetBackColor(COLORREF back_color);		//设置绘制文本时填充的背景颜色
-    //COLORREF GetBackColor() const { return m_backColor; }
-    CFont* SetFont(CFont* pfont);		//设置绘制文本的字体（返回原来的字体）
-	CFont* GetFont() { return m_pfont; }
+    CDrawCommon();
+    virtual ~CDrawCommon(); // 基类析构方法需要是虚方法
+
+    virtual void Create(CDC* pDC, CFont* pFont = nullptr);
+    void Create(CDC* pDC, Gdiplus::Graphics* pGraphics, CFont* pFont = nullptr);
+    CFont* SetFont(CFont* pFont);       // 设置绘制文本的字体（返回原来的字体）
+    CFont* GetFont() { return m_pfont; }
     void SetDC(CDC* pDC);		//设置绘图的DC
     CDC* GetDC()
     {
@@ -75,39 +79,24 @@ public:
     //color1: 分割位置左边的文本颜色
     //color2: 分割位置右边的文本颜色
     //split: 颜色分割位置，取值为0~1000（用于歌词动态显示）
-    //center: 文本是否居中
+    //align: 文本对齐方式
     //no_clip_area: 如果为true，则不在输出文字时限制绘图区域
     void DrawWindowText(CRect rect, LPCTSTR lpszString, COLORREF color1, COLORREF color2, int split, Alignment align = Alignment::LEFT, bool no_clip_area = false);
-
-    // 在指定的矩形区域内绘制分割颜色的带有进度符号的歌词文本
-    // rect: 文本的矩形区域
-    // lpszBeforeString: 进度符号
-    // lpszString: 要绘制的文本
-    // color1: 分割位置左边的文本颜色
-    // color2: 分割位置右边的文本颜色
-    // split: 颜色分割位置，取值为0~1000（用于歌词动态显示）
-    // isBefore: 颜色分割位置在描述进度符号还是描述歌词
-    // center: 文本是否居中
-    // no_clip_area: 如果为true，则不在输出文字时限制绘图区域
-    void DrawWindowTextForLyric(CRect rect, LPCTSTR lpszBeforeString, LPCTSTR lpszString, COLORREF color1, COLORREF color2, int split, bool isBefore, Alignment align = Alignment::LEFT, bool no_clip_area = false);
-
 
     //在控件上绘制滚动的文本（当长度不够时），pixel指定此函数调用一次移动的像素值，如果reset为true，则滚动到初始位置
     //rect: 文本的矩形区域
     //lpszString: 要绘制的文本
     //color: 文本的颜色
     //pixel: 此函数调用一次滚动的像素值，值越小滚动越慢
-    //center: 文本是否居中
+    //center: true时文本居中，false时左对齐
     //scroll_info: 用来保存一些当前文本滚动的状态信息
     //reset: 如果reset为true，则重置scroll_info，并滚动到初始位置
-    void DrawScrollText(CRect rect, LPCTSTR lpszString, COLORREF color, double pixel, bool center, ScrollInfo& scroll_info, bool reset = false);
+    void DrawScrollText(CRect rect, LPCTSTR lpszString, COLORREF color, double pixel, bool center, ScrollInfo& scroll_info, bool reset = false, bool no_clip_area = false);
 
     //函数功能和DrawScrollText一样，只是这个函数只会从左到右滚动，不会更换方向
     void DrawScrollText2(CRect rect, LPCTSTR lpszString, COLORREF color, double pixel, bool center, ScrollInfo& scroll_info, bool reset = false);
 
-    static void SetDrawArea(CDC* pDC, CRect rect);
-    void SetDrawArea(CRect rect);
-
+public:
     //绘制一个位图（使用GDI）
     void DrawBitmap(CBitmap& bitmap, CPoint start_point, CSize size, StretchMode stretch_mode, bool no_clip_area = false);
     void DrawBitmap(UINT bitmap_id, CPoint start_point, CSize size, StretchMode stretch_mode, bool no_clip_area = false);
@@ -118,6 +107,8 @@ public:
     void DrawImage(Gdiplus::Image* pImage, CPoint start_point, CSize size, StretchMode stretch_mode, bool no_clip_area = false);
 
     void DrawIcon(HICON hIcon, CPoint start_point, CSize size);
+    void DrawIcon(HICON hIcon, CRect rect);
+    void DrawIcon(HICON hIcon, CRect rect, int icon_size);
 
     void FillRect(CRect rect, COLORREF color, bool no_clip_area = false);
     void FillAlphaRect(CRect rect, COLORREF color, BYTE alpha, bool no_clip_area = false);		//填充一个半透明的矩形（参照http://blog.csdn.net/lee353086/article/details/38311421）
@@ -129,6 +120,9 @@ public:
 
     void DrawRoundRect(CRect rect, COLORREF color, int radius, BYTE alpha = 255);       //绘制圆角矩形（使用GDI+）
     void DrawRoundRect(Gdiplus::Rect rect, Gdiplus::Color color, int radius);       //绘制圆角矩形（使用GDI+）
+
+    void DrawEllipse(CRect rect, COLORREF color, BYTE alpha = 255);     //绘制椭圆（使用GDI+）
+    void DrawEllipse(Gdiplus::Rect rect, Gdiplus::Color color);         //绘制椭圆（使用GDI+）
 
     CSize GetTextExtent(LPCTSTR str);
 
@@ -142,8 +136,6 @@ public:
     static void ImageResize(const CImage& img_src, const wstring& path_dest, int size, ImageType type);
     static void ImageResize(const wstring& path_src, const wstring& path_dest, int size, ImageType type);
 
-    static HICON LoadIconResource(UINT id, int width, int height);
-
     //复制一个bitmap (http://wupei.j2megame.org/archives/86) 
     //(这两个函数未测试成功，复制的图片为全黑色，原因暂时未知，后面再调查)
     static HBITMAP CopyBitmap(HBITMAP hSourceHbitmap);
@@ -152,12 +144,13 @@ public:
     //将一个Bitmap保存到文件
     static void SaveBitmap(HBITMAP bitmap, LPCTSTR path);
 
-    void ImageDrawAreaConvert(CSize image_size, CPoint& start_point, CSize& size, StretchMode stretch_mode, bool no_clip_area);
+    void ImageDrawAreaConvert(CSize image_size, CPoint& start_point, CSize& size, StretchMode stretch_mode);
+
+    //计算一个矩形中正方形图标的矩形区域
+    static CRect CalculateCenterIconRect(CRect rect, int icon_size);
 
 protected:
     CDC* m_pDC{};		//用于绘图的CDC类的指针
-    CWnd* m_pMainWnd{};	//绘图窗口的句柄
-    //COLORREF m_backColor{ RGB(255,255,255) };
     CFont* m_pfont{};
     Gdiplus::Graphics* m_pGraphics{};
     bool m_auto_destory_graphics{};     //是否自动析构Graphics对象，如果Graphics对象是内部创建的，则为true，如果是从外面传过来的，则为false
@@ -196,3 +189,38 @@ private:
     CBitmap* m_pOldBit;
     CRect m_rect;
 };
+
+
+//用于在UI中设置绘图区域。
+//在需要设置绘图区域时，创建此类的一个局部对象，它会在构造时设置绘图区域，并在析构时恢复上次绘图区域
+class DrawAreaGuard
+{
+public:
+    DrawAreaGuard(const DrawAreaGuard&) = delete;
+    DrawAreaGuard(CDrawCommon* drawer, CRect rect, bool gdi_only = false, bool enable = true)
+        : m_drawer(drawer), m_gdi_only(gdi_only), m_enable(enable)
+    {
+        if (m_drawer != nullptr && m_enable)
+            old_rect = SetDrawArea(rect, gdi_only);
+    }
+
+    ~DrawAreaGuard()
+    {
+        if (m_drawer != nullptr && m_enable)
+            SetDrawArea(old_rect, m_gdi_only);
+    }
+
+private:
+    //设置绘图区域，并返回上次的绘图区域
+    CRect SetDrawArea(CRect rect, bool gdi_only);
+
+    //恢复绘图区域
+    void ResetDrawArea(bool gdi_only);
+
+private:
+    CDrawCommon* m_drawer{};
+    bool m_enable{ true };
+    bool m_gdi_only{};
+    CRect old_rect;
+};
+

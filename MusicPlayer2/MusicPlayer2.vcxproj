@@ -28,14 +28,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
@@ -43,14 +43,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
@@ -96,11 +96,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>bass.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>bass.lib;Powrprof.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>api-ms-win-core-winrt-l1-1-0.dll;api-ms-win-core-winrt-string-l1-1-0.dll;api-ms-win-shcore-stream-winrt-l1-1-0.dll;powrprof.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -108,7 +111,7 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </Midl>
     <ResourceCompile>
-      <Culture>0x0804</Culture>
+      <Culture>0x0409</Culture>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
@@ -123,11 +126,14 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>bass_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>bass_x64.lib;Powrprof.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>api-ms-win-core-winrt-l1-1-0.dll;api-ms-win-core-winrt-string-l1-1-0.dll;api-ms-win-shcore-stream-winrt-l1-1-0.dll;powrprof.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -135,7 +141,7 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </Midl>
     <ResourceCompile>
-      <Culture>0x0804</Culture>
+      <Culture>0x0409</Culture>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
@@ -152,13 +158,16 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>bass.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>bass.lib;Powrprof.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>api-ms-win-core-winrt-l1-1-0.dll;api-ms-win-core-winrt-string-l1-1-0.dll;api-ms-win-shcore-stream-winrt-l1-1-0.dll;powrprof.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -166,7 +175,7 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </Midl>
     <ResourceCompile>
-      <Culture>0x0804</Culture>
+      <Culture>0x0409</Culture>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
@@ -183,13 +192,16 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>bass_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>bass_x64.lib;Powrprof.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>api-ms-win-core-winrt-l1-1-0.dll;api-ms-win-core-winrt-string-l1-1-0.dll;api-ms-win-shcore-stream-winrt-l1-1-0.dll;powrprof.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -197,7 +209,7 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </Midl>
     <ResourceCompile>
-      <Culture>0x0804</Culture>
+      <Culture>0x0409</Culture>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
@@ -207,14 +219,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="compile_time.txt" />
-    <Text Include="Help.txt" />
-    <Text Include="Help_en_us.txt" />
     <Text Include="ReadMe.txt" />
+    <Text Include="res\Acknowledgement.txt" />
+    <Text Include="res\hzpy-utf8.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AboutDlg.h" />
+    <ClInclude Include="AcceleratorRes.h" />
     <ClInclude Include="AddToPlaylistDlg.h" />
-    <ClInclude Include="AlbumCoverInfoDlg.h" />
     <ClInclude Include="AllMediaDlg.h" />
     <ClInclude Include="AppearanceSettingDlg.h" />
     <ClInclude Include="AudioCommon.h" />
@@ -231,6 +243,7 @@
     <ClInclude Include="CDevicesManager.h" />
     <ClInclude Include="CDonateDlg.h" />
     <ClInclude Include="CFloatPlaylistDlg.h" />
+    <ClInclude Include="ChinesePingyinRes.h" />
     <ClInclude Include="CHotKey.h" />
     <ClInclude Include="CHotkeyManager.h" />
     <ClInclude Include="CHotKeySettingDlg.h" />
@@ -238,25 +251,46 @@
     <ClInclude Include="CListBoxEnhanced.h" />
     <ClInclude Include="CListenTimeStatisticsDlg.h" />
     <ClInclude Include="CMMNotificationClient.h" />
-    <ClInclude Include="CPlayerUI4.h" />
-    <ClInclude Include="CPlayerUI5.h" />
+    <ClInclude Include="CommonDialogMgr.h" />
     <ClInclude Include="CUIDrawer.h" />
     <ClInclude Include="CMainDialogBase.h" />
     <ClInclude Include="ColorStaticEx.h" />
     <ClInclude Include="CueFile.h" />
+    <ClInclude Include="EditableListBox.h" />
     <ClInclude Include="EditStringListDlg.h" />
+    <ClInclude Include="FfmpegCore.h" />
+    <ClInclude Include="FileNameFormDlg.h" />
+    <ClInclude Include="FilterHelper.h" />
+    <ClInclude Include="FlacEncodeCfgDlg.h" />
+    <ClInclude Include="FolderPropertiesDlg.h" />
+    <ClInclude Include="FontDialogEx.h" />
     <ClInclude Include="GetTagOnlineDlg.h" />
+    <ClInclude Include="HorizontalSplitter.h" />
+    <ClInclude Include="IconMgr.h" />
     <ClInclude Include="IPropertyTabDlg.h" />
+    <ClInclude Include="LastFM.h" />
+    <ClInclude Include="LastFMDataArchive.h" />
     <ClInclude Include="LyricRelateDlg.h" />
-    <ClInclude Include="CPlayerUI3.h" />
+    <ClInclude Include="md5.h" />
+    <ClInclude Include="MediaLibItemPropertiesDlg.h" />
+    <ClInclude Include="PlaylistPropertiesDlg.h" />
+    <ClInclude Include="SimplePropertiesDlg.h" />
+    <ClInclude Include="UiMediaLibItemMgr.h" />
+    <ClInclude Include="MediaLibPlaylistMgr.h" />
     <ClInclude Include="MediaLibStatisticsDlg.h" />
     <ClInclude Include="MediaTransControls.h" />
+    <ClInclude Include="MediaTransControlsImpl.h" />
     <ClInclude Include="MenuEditCtrl.h" />
+    <ClInclude Include="MenuMgr.h" />
+    <ClInclude Include="MiniModeUserUi.h" />
+    <ClInclude Include="MoreRecentItemDlg.h" />
     <ClInclude Include="PropertyAdvancedDlg.h" />
     <ClInclude Include="PropertyAlbumCoverDlg.h" />
     <ClInclude Include="PropertyDlg.h" />
     <ClInclude Include="PropertyDlgHelper.h" />
     <ClInclude Include="RecentFolderAndPlaylist.h" />
+    <ClInclude Include="RecentFolderMgr.h" />
+    <ClInclude Include="RenameDlg.h" />
     <ClInclude Include="ScintillaEditView.h" />
     <ClInclude Include="SelectItemDlg.h" />
     <ClInclude Include="SliderCtrlEx.h" />
@@ -264,14 +298,17 @@
     <ClInclude Include="SongInfoHelper.h" />
     <ClInclude Include="SpectralDataHelper.h" />
     <ClInclude Include="SpinEdit.h" />
-    <ClInclude Include="TagFromFileNameDlg.h" />
+    <ClInclude Include="StrTable.h" />
+    <ClInclude Include="TagFromNameDlg.h" />
+    <ClInclude Include="TagSelBaseDlg.h" />
     <ClInclude Include="TagLibHelper.h" />
     <ClInclude Include="TinyXml2Helper.h" />
     <ClInclude Include="tinyxml2\tinyxml2.h" />
     <ClInclude Include="UIElement.h" />
+    <ClInclude Include="UiSearchBox.h" />
     <ClInclude Include="UIWindow.h" />
+    <ClInclude Include="UIWindowCmdHelper.h" />
     <ClInclude Include="UserUi.h" />
-    <ClInclude Include="WIC.h" />
     <ClInclude Include="Define.h" />
     <ClInclude Include="DesktopLyric.h" />
     <ClInclude Include="DllLib.h" />
@@ -280,14 +317,11 @@
     <ClInclude Include="LyricsWindow.h" />
     <ClInclude Include="MciCore.h" />
     <ClInclude Include="CMediaLibDlg.h" />
-    <ClInclude Include="CMiniModeUI.h" />
     <ClInclude Include="CNotifyIcon.h" />
     <ClInclude Include="CommonData.h" />
     <ClInclude Include="COSUPlayerHelper.h" />
     <ClInclude Include="CoverDownloadCommon.h" />
     <ClInclude Include="CoverDownloadDlg.h" />
-    <ClInclude Include="CPlayerUI.h" />
-    <ClInclude Include="CPlayerUI2.h" />
     <ClInclude Include="CPlayerUIBase.h" />
     <ClInclude Include="CPlayerUIHelper.h" />
     <ClInclude Include="crashtool.h" />
@@ -309,7 +343,6 @@
     <ClInclude Include="Playlist.h" />
     <ClInclude Include="PlaylistMgr.h" />
     <ClInclude Include="PlaySettingsDlg.h" />
-    <ClInclude Include="RecorderDlg.h" />
     <ClInclude Include="GaussBlur.h" />
     <ClInclude Include="IniHelper.h" />
     <ClInclude Include="RegFileRelate.h" />
@@ -366,8 +399,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AboutDlg.cpp" />
+    <ClCompile Include="AcceleratorRes.cpp" />
     <ClCompile Include="AddToPlaylistDlg.cpp" />
-    <ClCompile Include="AlbumCoverInfoDlg.cpp" />
     <ClCompile Include="AllMediaDlg.cpp" />
     <ClCompile Include="AppearanceSettingDlg.cpp" />
     <ClCompile Include="AudioCommon.cpp" />
@@ -383,6 +416,7 @@
     <ClCompile Include="CDevicesManager.cpp" />
     <ClCompile Include="CDonateDlg.cpp" />
     <ClCompile Include="CFloatPlaylistDlg.cpp" />
+    <ClCompile Include="ChinesePingyinRes.cpp" />
     <ClCompile Include="CHotKey.cpp" />
     <ClCompile Include="CHotkeyManager.cpp" />
     <ClCompile Include="CHotKeySettingDlg.cpp" />
@@ -390,32 +424,57 @@
     <ClCompile Include="CListBoxEnhanced.cpp" />
     <ClCompile Include="CListenTimeStatisticsDlg.cpp" />
     <ClCompile Include="CMMNotificationClient.cpp" />
-    <ClCompile Include="CPlayerUI4.cpp" />
-    <ClCompile Include="CPlayerUI5.cpp" />
+    <ClCompile Include="CommonData.cpp" />
+    <ClCompile Include="CommonDialogMgr.cpp" />
     <ClCompile Include="CUIDrawer.cpp" />
     <ClCompile Include="CMainDialogBase.cpp" />
     <ClCompile Include="ColorStaticEx.cpp" />
     <ClCompile Include="CueFile.cpp" />
+    <ClCompile Include="EditableListBox.cpp" />
     <ClCompile Include="EditStringListDlg.cpp" />
+    <ClCompile Include="FfmpegCore.cpp" />
+    <ClCompile Include="FileNameFormDlg.cpp" />
+    <ClCompile Include="FilterHelper.cpp" />
+    <ClCompile Include="FlacEncodeCfgDlg.cpp" />
+    <ClCompile Include="FolderPropertiesDlg.cpp" />
+    <ClCompile Include="FontDialogEx.cpp" />
     <ClCompile Include="GetTagOnlineDlg.cpp" />
+    <ClCompile Include="HorizontalSplitter.cpp" />
+    <ClCompile Include="IconMgr.cpp" />
+    <ClCompile Include="LastFM.cpp" />
+    <ClCompile Include="LastFMDataArchive.cpp" />
     <ClCompile Include="LyricRelateDlg.cpp" />
-    <ClCompile Include="CPlayerUI3.cpp" />
+    <ClCompile Include="md5.cpp" />
+    <ClCompile Include="MediaLibItemPropertiesDlg.cpp" />
+    <ClCompile Include="PlaylistPropertiesDlg.cpp" />
+    <ClCompile Include="SimplePropertiesDlg.cpp" />
+    <ClCompile Include="UiMediaLibItemMgr.cpp" />
+    <ClCompile Include="MediaLibPlaylistMgr.cpp" />
     <ClCompile Include="MediaLibStatisticsDlg.cpp" />
     <ClCompile Include="MediaTransControls.cpp" />
+    <ClCompile Include="MediaTransControlsImpl.cpp" />
     <ClCompile Include="MenuEditCtrl.cpp" />
+    <ClCompile Include="MenuMgr.cpp" />
+    <ClCompile Include="MiniModeUserUi.cpp" />
+    <ClCompile Include="MoreRecentItemDlg.cpp" />
     <ClCompile Include="PropertyAdvancedDlg.cpp" />
     <ClCompile Include="PropertyAlbumCoverDlg.cpp" />
     <ClCompile Include="PropertyDlg.cpp" />
     <ClCompile Include="PropertyDlgHelper.cpp" />
     <ClCompile Include="RecentFolderAndPlaylist.cpp" />
+    <ClCompile Include="RecentFolderMgr.cpp" />
+    <ClCompile Include="RenameDlg.cpp" />
     <ClCompile Include="ScintillaEditView.cpp" />
     <ClCompile Include="SelectItemDlg.cpp" />
     <ClCompile Include="SliderCtrlEx.cpp" />
     <ClCompile Include="SongDataManager.cpp" />
+    <ClCompile Include="SongInfo.cpp" />
     <ClCompile Include="SongInfoHelper.cpp" />
     <ClCompile Include="SpectralDataHelper.cpp" />
     <ClCompile Include="SpinEdit.cpp" />
-    <ClCompile Include="TagFromFileNameDlg.cpp" />
+    <ClCompile Include="StrTable.cpp" />
+    <ClCompile Include="TagFromNameDlg.cpp" />
+    <ClCompile Include="TagSelBaseDlg.cpp" />
     <ClCompile Include="TagLibHelper.cpp" />
     <ClCompile Include="TinyXml2Helper.cpp" />
     <ClCompile Include="tinyxml2\tinyxml2.cpp">
@@ -425,9 +484,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="UIElement.cpp" />
+    <ClCompile Include="UiSearchBox.cpp" />
     <ClCompile Include="UIWindow.cpp" />
+    <ClCompile Include="UIWindowCmdHelper.cpp" />
     <ClCompile Include="UserUi.cpp" />
-    <ClCompile Include="WIC.cpp" />
     <ClCompile Include="DesktopLyric.cpp" />
     <ClCompile Include="DllLib.cpp" />
     <ClCompile Include="FolderExploreDlg.cpp" />
@@ -435,13 +495,10 @@
     <ClCompile Include="LyricsWindow.cpp" />
     <ClCompile Include="MciCore.cpp" />
     <ClCompile Include="CMediaLibDlg.cpp" />
-    <ClCompile Include="CMiniModeUI.cpp" />
     <ClCompile Include="CNotifyIcon.cpp" />
     <ClCompile Include="COSUPlayerHelper.cpp" />
     <ClCompile Include="CoverDownloadCommon.cpp" />
     <ClCompile Include="CoverDownloadDlg.cpp" />
-    <ClCompile Include="CPlayerUI.cpp" />
-    <ClCompile Include="CPlayerUI2.cpp" />
     <ClCompile Include="CPlayerUIBase.cpp" />
     <ClCompile Include="CPlayerUIHelper.cpp" />
     <ClCompile Include="crashtool.cpp" />
@@ -461,7 +518,6 @@
     <ClCompile Include="Playlist.cpp" />
     <ClCompile Include="PlaylistMgr.cpp" />
     <ClCompile Include="PlaySettingsDlg.cpp" />
-    <ClCompile Include="RecorderDlg.cpp" />
     <ClCompile Include="GaussBlur.cpp" />
     <ClCompile Include="IniHelper.cpp" />
     <ClCompile Include="RegFileRelate.cpp" />
@@ -522,20 +578,32 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\LICENSE" />
+    <None Include="language\English.ini" />
     <None Include="res\drag.cur" />
     <None Include="res\MusicPlayer2.rc2" />
+    <None Include="skins\ui1.xml" />
+    <None Include="skins\ui2.xml" />
+    <None Include="skins\miniMode\miniMode00.xml" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\about.bmp" />
+    <Image Include="res\add.ico" />
     <Image Include="res\AddTag.ico" />
     <Image Include="res\add_d.ico" />
+    <Image Include="res\album.ico" />
     <Image Include="res\album_cover.ico" />
+    <Image Include="res\album_cover_d.ico" />
     <Image Include="res\album_d.ico" />
+    <Image Include="res\artist.ico" />
     <Image Include="res\artist_d.ico" />
+    <Image Include="res\background_d.ico" />
+    <Image Include="res\bitrate.ico" />
+    <Image Include="res\bitrate_d.ico" />
     <Image Include="res\close.ico" />
     <Image Include="res\close_d.ico" />
     <Image Include="res\convert.ico" />
     <Image Include="res\convert_d.ico" />
+    <Image Include="res\copy.ico" />
     <Image Include="res\Cortana_black.bmp" />
     <Image Include="res\Cortana_white.bmp" />
     <Image Include="res\dark_mode.ico" />
@@ -543,6 +611,8 @@
     <Image Include="res\default_cover_new.ico" />
     <Image Include="res\default_cover_new_not_played.ico" />
     <Image Include="res\DeleteTag.ico" />
+    <Image Include="res\display_mode.ico" />
+    <Image Include="res\display_mode_d.ico" />
     <Image Include="res\donate.bmp" />
     <Image Include="res\donate_wechat.bmp" />
     <Image Include="res\double_line_d.ico" />
@@ -553,6 +623,7 @@
     <Image Include="res\eq_d.ico" />
     <Image Include="res\exit_d.ico" />
     <Image Include="res\expand.ico" />
+    <Image Include="res\expand_d.ico" />
     <Image Include="res\explorer_folder.ico" />
     <Image Include="res\favourite.ico" />
     <Image Include="res\favourite_d.ico" />
@@ -562,12 +633,25 @@
     <Image Include="res\file_relate.ico" />
     <Image Include="res\file_relate_d.ico" />
     <Image Include="res\Find.ico" />
+    <Image Include="res\fix_d.ico" />
+    <Image Include="res\folder_explore.ico" />
     <Image Include="res\folder_explore_d.ico" />
+    <Image Include="res\genre.ico" />
     <Image Include="res\genre_d.ico" />
     <Image Include="res\heart.ico" />
+    <Image Include="res\help.ico" />
     <Image Include="res\help_d.ico" />
+    <Image Include="res\hot_key.ico" />
+    <Image Include="res\internal_lyric_d.ico" />
+    <Image Include="res\karaoke.ico" />
+    <Image Include="res\karaoke_d.ico" />
+    <Image Include="res\light_mode.ico" />
+    <Image Include="res\link.ico" />
+    <Image Include="res\link_d.ico" />
     <Image Include="res\locate.ico" />
+    <Image Include="res\locate_d.ico" />
     <Image Include="res\lock_d.ico" />
+    <Image Include="res\lyric.ico" />
     <Image Include="res\lyric_d.ico" />
     <Image Include="res\lyric_delay.ico" />
     <Image Include="res\lyric_forward.ico" />
@@ -581,47 +665,81 @@
     <Image Include="res\minimize.ico" />
     <Image Include="res\minimize_d.ico" />
     <Image Include="res\mini_d.ico" />
+    <Image Include="res\mini_restore.ico" />
+    <Image Include="res\mini_restore_d.ico" />
+    <Image Include="res\more_d.ico" />
     <Image Include="res\MusicPlayer2.ico" />
     <Image Include="res\MusicPlayer2_dark.ico" />
     <Image Include="res\MusicPlayer2_debug.ico" />
     <Image Include="res\MusicPlayer2_light.ico" />
     <Image Include="res\music_d.ico" />
+    <Image Include="res\new_folder.ico" />
+    <Image Include="res\new_folder_d.ico" />
     <Image Include="res\next_dark.ico" />
     <Image Include="res\next_white.ico" />
     <Image Include="res\notify_preview.bmp" />
     <Image Include="res\notify_preview_light.bmp" />
+    <Image Include="res\now_playing.ico" />
+    <Image Include="res\now_playing_d.ico" />
     <Image Include="res\ok.ico" />
     <Image Include="res\online_d.ico" />
+    <Image Include="res\owner_draw_titlebar_preview.bmp" />
     <Image Include="res\pause_dark.ico" />
     <Image Include="res\pause_white.ico" />
     <Image Include="res\pin_d.ico" />
+    <Image Include="res\playlist_dock.ico" />
     <Image Include="res\playlist_dock_d.ico" />
     <Image Include="res\playlist_float_d.ico" />
+    <Image Include="res\play_as_next.ico" />
     <Image Include="res\play_dark.ico" />
+    <Image Include="res\play_in_folder.ico" />
+    <Image Include="res\play_in_playlist.ico" />
+    <Image Include="res\play_in_playlist_d.ico" />
     <Image Include="res\play_pause_d.ico" />
     <Image Include="res\play_white.ico" />
     <Image Include="res\previous_dark.ico" />
     <Image Include="res\previous_white.ico" />
+    <Image Include="res\recent_songs.ico" />
     <Image Include="res\recent_songs_d.ico" />
+    <Image Include="res\refresh.ico" />
+    <Image Include="res\refresh_d.ico" />
     <Image Include="res\rename_d.ico" />
     <Image Include="res\Replace.ico" />
     <Image Include="res\ReplaceTag.ico" />
     <Image Include="res\restore.ico" />
     <Image Include="res\restore_d.ico" />
+    <Image Include="res\reverb.ico" />
+    <Image Include="res\reverb_d.ico" />
     <Image Include="res\rew_new_d.ico" />
     <Image Include="res\Save.ico" />
     <Image Include="res\save_as_d.ico" />
     <Image Include="res\save_new.ico" />
     <Image Include="res\setting.ico" />
     <Image Include="res\setting_d.ico" />
+    <Image Include="res\shortcut_d.ico" />
     <Image Include="res\skn.ico" />
     <Image Include="res\skn_d.ico" />
+    <Image Include="res\slow_down_d.ico" />
+    <Image Include="res\sort.ico" />
+    <Image Include="res\sort_d.ico" />
+    <Image Include="res\speed_up_d.ico" />
     <Image Include="res\star.ico" />
+    <Image Include="res\star_d.ico" />
     <Image Include="res\statistics_d.ico" />
     <Image Include="res\stop_dark.ico" />
     <Image Include="res\stop_white.ico" />
+    <Image Include="res\switch.ico" />
+    <Image Include="res\switch_d.ico" />
+    <Image Include="res\system_titlebar_preview.bmp" />
     <Image Include="res\tag.ico" />
     <Image Include="res\toolbar1.bmp" />
+    <Image Include="res\tree_branch_collapsed.ico" />
+    <Image Include="res\tree_branch_collapsed_d.ico" />
+    <Image Include="res\tree_branch_expanded.ico" />
+    <Image Include="res\tree_branch_expanded_d.ico" />
+    <Image Include="res\unlink.ico" />
+    <Image Include="res\unlink_d.ico" />
+    <Image Include="res\up_d.ico" />
     <Image Include="res\volume0.ico" />
     <Image Include="res\volume0_d.ico" />
     <Image Include="res\volume1.ico" />
@@ -630,6 +748,7 @@
     <Image Include="res\volume2_d.ico" />
     <Image Include="res\volume3.ico" />
     <Image Include="res\volume3_d.ico" />
+    <Image Include="res\year.ico" />
     <Image Include="res\year_d.ico" />
     <Image Include="res\上一曲.ico" />
     <Image Include="res\下一曲.ico" />

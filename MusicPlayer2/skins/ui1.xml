@@ -1,0 +1,95 @@
+﻿<root xmlns="https://github.com/zhongyang219/MusicPlayer2/skin" xmlns:xsi="http://www.w3.org/2101/XMLSchema-instance" xsi:schemaLocation="https://github.com/zhongyang219/MusicPlayer2/skin ./skin.xsd"
+  index="1">
+
+  <ui>
+    <verticalLayout margin="4">
+      <placeHolder show_when_use_system_titlebar="true" height="28"/>
+      <horizontalLayout height="90">
+        <rectangle width="118" no_corner_radius="true">
+          <albumCover margin="2">
+            <spectrum draw_reflex="false" fixed_width="true" alignment="left" height="60%" margin-bottom="0"/>
+          </albumCover>
+        </rectangle>
+        <verticalLayout margin-left="4">
+          <trackInfo/>
+          <horizontalLayout>
+            <text width="54" type="userDefine" text="%(TXT_TITLE):"/>
+            <text type="title" style="scroll"/>
+          </horizontalLayout>
+          <horizontalLayout>
+            <text width="54" type="userDefine" text="%(TXT_ARTIST):"/>
+            <text type="artist" style="scroll"/>
+          </horizontalLayout>
+          <horizontalLayout>
+            <text width="54" type="userDefine" text="%(TXT_ALBUM):"/>
+            <text type="album" style="scroll"/>
+          </horizontalLayout>
+          <horizontalLayout>
+            <text width="54" type="userDefine" text="%(TXT_UI_FORMAT):"/>
+            <text type="format" style="scroll"/>
+          </horizontalLayout>
+        </verticalLayout>
+      </horizontalLayout>
+      <rectangle height="24" margin-top="6">
+        <toolbar show_translate_btn="false"/>
+      </rectangle>
+	  <classicalControlBar margin-top="4" show_switch_display_btn="true"/>
+      <stackElement>
+        <verticalLayout>
+          <horizontalLayout height="24" margin-left="6" margin-right="6">
+            <text type="userDefine" text="%(TXT_UI_LYRIC_SHOW):"/>
+            <placeHolder/>
+            <button key="karaoke" width="24" height="24"/>
+            <button key="lyricTranslate" width="24" height="24" margin-left="4"/>
+          </horizontalLayout>
+          <lyrics margin-top="4" margin-left="6" margin-right="6" margin-bottom="6"/>
+        </verticalLayout>
+        <verticalLayout margin="4">
+          <playlistIndicator height="30" margin-bottom="4"/>
+          <playlist/>
+        </verticalLayout>
+      </stackElement>
+    </verticalLayout>
+  </ui>
+
+  <ui type="small">
+    <verticalLayout margin="4">
+      <placeHolder show_when_use_system_titlebar="true" height="28"/>
+      <verticalLayout>
+        <horizontalLayout height="90">
+          <rectangle width="118" no_corner_radius="true">
+            <albumCover margin="2">
+              <spectrum draw_reflex="false" fixed_width="true" alignment="left" height="60%" margin-bottom="0"/>
+            </albumCover>
+          </rectangle>
+          <verticalLayout margin-left="4">
+            <trackInfo/>
+            <horizontalLayout>
+              <text width="54" type="userDefine" text="%(TXT_TITLE):"/>
+              <text type="title" style="scroll"/>
+            </horizontalLayout>
+            <horizontalLayout>
+              <text width="54" type="userDefine" text="%(TXT_ARTIST):"/>
+              <text type="artist" style="scroll"/>
+            </horizontalLayout>
+            <horizontalLayout>
+              <text width="54" type="userDefine" text="%(TXT_ALBUM):"/>
+              <text type="album" style="scroll"/>
+            </horizontalLayout>
+            <horizontalLayout>
+              <text width="54" type="userDefine" text="%(TXT_UI_FORMAT):"/>
+              <text type="format" style="scroll"/>
+            </horizontalLayout>
+          </verticalLayout>
+        </horizontalLayout>
+        <rectangle height="24" margin-top="4">
+          <toolbar show_translate_btn="false"/>
+        </rectangle>
+        <lyrics margin-top="4" hide-height="192"/>
+	      <classicalControlBar/>
+      </verticalLayout>
+	  </verticalLayout>
+  </ui>
+
+
+</root>

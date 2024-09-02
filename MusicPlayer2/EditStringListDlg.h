@@ -1,48 +1,37 @@
 ﻿#pragma once
-#include "CListBoxEnhanced.h"
 #include "BaseDialog.h"
+#include "EditableListBox.h"
 
 // CEditStringListDlg 对话框
 
 class CEditStringListDlg : public CBaseDialog
 {
-	DECLARE_DYNAMIC(CEditStringListDlg)
+    DECLARE_DYNAMIC(CEditStringListDlg)
 
 public:
-	CEditStringListDlg(vector<wstring>& items, CWnd* pParent = nullptr);   // 标准构造函数
-	virtual ~CEditStringListDlg();
+    CEditStringListDlg(vector<wstring>& items, CWnd* pParent = nullptr);   // 标准构造函数
+    virtual ~CEditStringListDlg();
 
     void SetTitle(LPCTSTR title);
-    void SetDlgIcon(HICON icon);
+    void SetDlgIcon(IconMgr::IconType icon_type);
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_SELECT_ITEM_DIALOG };
+    enum { IDD = IDD_SELECT_ITEM_DIALOG };
 #endif
 
 private:
-    CListBoxEnhanced m_list_ctrl;
+    CEditableListBox m_list_ctrl;
     CString m_title;
     vector<wstring>& m_items;
-    HICON m_icon{};
-    CEdit m_item_edit;
-    int m_edit_row{};
-    bool m_editing{};
+    IconMgr::IconType m_icon_type{ IconMgr::IconType::IT_NO_ICON };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
-
-	DECLARE_MESSAGE_MAP()
-
-    afx_msg void OnEnKillfocusEdit1();
-    afx_msg void OnNMDblclkList1(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnLvnBeginScrollList1(NMHDR* pNMHDR, LRESULT* pResult);
-
     virtual CString GetDialogName() const override;
+    virtual bool InitializeControls() override;
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
-    void Edit(int row);     //编辑指定行
-    void EndEdit();         //结束编辑
-
+    DECLARE_MESSAGE_MAP()
 public:
     virtual BOOL OnInitDialog();
     virtual void OnOK();

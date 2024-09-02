@@ -4,10 +4,8 @@
 #include "stdafx.h"
 #include "MusicPlayer2.h"
 #include "FileRelateDlg.h"
-#include "afxdialogex.h"
 #include "AudioCommon.h"
 #include "RegFileRelate.h"
-#include <set>
 #include "Playlist.h"
 
 
@@ -28,6 +26,25 @@ CFileRelateDlg::~CFileRelateDlg()
 CString CFileRelateDlg::GetDialogName() const
 {
     return _T("FileRelateDlg");
+}
+
+bool CFileRelateDlg::InitializeControls()
+{
+    wstring temp;
+    temp = theApp.m_str_table.LoadText(L"TITLE_FILE_RELATE");
+    SetWindowTextW(temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_FILE_RELATE_SEL_DEFAULT");
+    SetDlgItemTextW(IDC_DEFAULT_BUTTON, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_FILE_RELATE_SEL_ALL");
+    SetDlgItemTextW(IDC_SELECT_ALL_CHECK, temp.c_str());
+
+    RepositionTextBasedControls({
+        { CtrlTextInfo::L2, IDC_DEFAULT_BUTTON, CtrlTextInfo::W32 },
+        { CtrlTextInfo::L1, IDC_SELECT_ALL_CHECK, CtrlTextInfo::W16 },
+        { CtrlTextInfo::R1, IDOK, CtrlTextInfo::W32 },
+        { CtrlTextInfo::R2, IDCANCEL, CtrlTextInfo::W32 }
+        });
+    return true;
 }
 
 void CFileRelateDlg::DoDataExchange(CDataExchange* pDX)
@@ -104,16 +121,16 @@ BOOL CFileRelateDlg::OnInitDialog()
     CBaseDialog::OnInitDialog();
 
     // TODO:  在此添加额外的初始化
-    SetIcon(theApp.m_icon_set.file_relate, FALSE);
-    
+    SetIcon(IconMgr::IconType::IT_File_Relate, FALSE);
+
     CRect rect;
     m_list_ctrl.GetWindowRect(rect);
 
     m_list_ctrl.SetExtendedStyle(m_list_ctrl.GetExtendedStyle() | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
     int width0 = theApp.DPI(120);
     int width1 = rect.Width() - width0 - theApp.DPI(20) - 1;
-    m_list_ctrl.InsertColumn(0, CCommon::LoadText(IDS_FORMAT), LVCFMT_LEFT, width0);
-    m_list_ctrl.InsertColumn(1,CCommon::LoadText(IDS_DESCRIPTION), LVCFMT_LEFT, width1);
+    m_list_ctrl.InsertColumn(0, theApp.m_str_table.LoadText(L"TXT_FILE_RELATE_FORMAT").c_str(), LVCFMT_LEFT, width0);
+    m_list_ctrl.InsertColumn(1, theApp.m_str_table.LoadText(L"TXT_FILE_RELATE_DESCRIPTION").c_str(), LVCFMT_LEFT, width1);
 
     RefreshList();
 
@@ -138,7 +155,7 @@ void CFileRelateDlg::OnOK()
             CString file_ext = m_list_ctrl.GetItemText(i, 0);
             wstring description = CAudioCommon::GetAudioDescriptionByExtension(wstring(file_ext));
 
-            if (CPlaylistFile::IsPlaylistExt(wstring(file_ext)))
+            if (CPlaylistFile::IsPlaylistExt(wstring(file_ext)) || CAudioCommon::GetAudioTypeByFileExtension(wstring(file_ext)) == AU_CUE)
                 reg_file.AddFileTypeRelate(file_ext, 66, false, description.c_str());
             else
                 reg_file.AddFileTypeRelate(file_ext, 46, false, description.c_str());
@@ -168,15 +185,8 @@ void CFileRelateDlg::OnBnClickedSelectAllCheck()
 
 void CFileRelateDlg::OnBnClickedDefaultButton()
 {
-    // TODO: 在此添加控件通知处理程序代码
-    std::set<wstring> default_selected;
-    for (auto item : CAudioCommon::m_all_surpported_extensions)
-    {
-        if (!item.empty() && item[0] == L'.')
-            item = item.substr(1);
-        if (item != L"mp1" && item != L"mp2" && item != L"mp4")
-            default_selected.insert(item);
-    }
+    //默认选中常见音频格式
+    std::set<wstring> default_selected{ L"aac", L"ac3", L"aif", L"aiff", L"amr", L"ape", L"asf", L"cda", L"cue", L"fla", L"flac", L"m4a", L"mac", L"mp+", L"mp3", L"mpc", L"mpp", L"oga", L"ogg", L"opus", L"spx", L"tta", L"wav", L"wma", L"wv"};
     int list_count{ m_list_ctrl.GetItemCount() };
     for (int i = 0; i < list_count; i++)
     {
@@ -187,5 +197,4 @@ void CFileRelateDlg::OnBnClickedDefaultButton()
         else
             m_list_ctrl.SetCheck(i, FALSE);
     }
-
 }

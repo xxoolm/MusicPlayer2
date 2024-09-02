@@ -3,6 +3,9 @@
 #include "bass.h"
 #include "BASSMidiLibrary.h"
 #include "Time.h"
+#include "BASSEncodeLibrary.h"
+#include "BASSWmaLibrary.h"
+#include "BassMixLibrary.h"
 
 #define PLAYING_STATE_DEFAULT_VALUE 99
 
@@ -15,7 +18,7 @@ public:
 
     virtual void InitCore() override;
     virtual void UnInitCore() override;
-    virtual unsigned int GetHandle() override;
+    unsigned int GetHandle();
 
     virtual std::wstring GetAudioType() override;
     virtual int GetChannels() override;
@@ -36,6 +39,11 @@ public:
     virtual void SetCurPosition(int position) override;
     virtual void GetAudioInfo(SongInfo& song_info, int flag = AF_LENGTH | AF_BITRATE | AF_TAG_INFO) override;
     virtual void GetAudioInfo(const wchar_t* file_path, SongInfo& song_info, int flag = AF_LENGTH | AF_BITRATE | AF_TAG_INFO) override;
+
+    virtual bool EncodeAudio(SongInfo song_info, const wstring& dest_file_path, EncodeFormat encode_format, void* encode_para, int dest_freq, EncodeAudioProc proc) override;
+    virtual bool InitEncoder() override;
+    virtual void UnInitEncoder() override;
+    virtual bool IsFreqConvertAvailable() override;
 
     virtual bool IsMidi() override;
     virtual bool IsMidiConnotPlay() override;
@@ -60,13 +68,16 @@ public:
     virtual std::wstring GetErrorInfo() override;
 
     virtual PlayerCoreType GetCoreType() override { return PT_BASS; }
-    virtual int GetDeviceCount() override;
+
+    virtual bool IsVolumeFadingOut() override;
 
     static int GetBASSCurrentPosition(HSTREAM hStream);
     static Time GetBASSSongLength(HSTREAM hStream);
     static void SetCurrentPosition(HSTREAM hStream, int position);
 
     static void GetBASSAudioInfo(HSTREAM hStream, SongInfo & song_info, int flag = AF_LENGTH | AF_BITRATE | AF_TAG_INFO);
+
+    wstring GetEncoderDir() { return m_encode_dir; }
 
 public:
     static CBASSMidiLibrary m_bass_midi_lib;
@@ -87,9 +98,9 @@ private:
     vector<HPLUGIN> m_plugin_handles;		//插件的句柄
     wstring m_sfont_name;		//MIDI音色库的名称
     static MidiLyricInfo m_midi_lyric;
-    BASS_CHANNELINFO m_channel_info;	//音频通道的信息
-    bool m_is_midi;
-    MidiInfo m_midi_info;
+    BASS_CHANNELINFO m_channel_info{};	//音频通道的信息
+    bool m_is_midi{};
+    MidiInfo m_midi_info{};
     int m_error_code{};
     int m_last_playing_state{ PLAYING_STATE_DEFAULT_VALUE };     //保存上一次的播放状态（BASS_ChannelIsActive的返回值）
 
@@ -104,4 +115,12 @@ private:
 
     static CCriticalSection m_critical;
     PlayingState m_playing_state{};
-};
+
+    static CBASSEncodeLibrary m_bass_encode_lib;
+    static CBASSWmaLibrary m_bass_wma_lib;
+    static CBassMixLibrary m_bass_mix_lib;
+
+    wstring m_encode_dir;
+
+    static bool m_fading;        //音量是否处于淡入淡出状态
+    };

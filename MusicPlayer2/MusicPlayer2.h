@@ -8,17 +8,14 @@
 #error "在包含此文件之前包含“stdafx.h”以生成 PCH 文件"
 #endif
 
-#include "resource.h"		// 主符号
-#include "Player.h"
-#include "AudioCommon.h"
-#include "ColorConvert.h"
-#include "DrawCommon.h"
-#include "IniHelper.h"
-#include "WinVersionHelper.h"
-#include "CHotkeyManager.h"
+#include "resource.h"       // 主符号
 #include "CommonData.h"
-#include "MediaLibHelper.h"
-
+#include "AcceleratorRes.h"
+#include "LastFM.h"
+#include "StrTable.h"
+#include "MenuMgr.h"
+#include "IconMgr.h"
+#include "ChinesePingyinRes.h"
 
 // CMusicPlayerApp:
 // 有关此类的实现，请参阅 MusicPlayer2.cpp
@@ -38,18 +35,16 @@ public:
     wstring m_song_data_path;	//储存所有歌曲信息数据文件的路径
     wstring m_recent_path_dat_path;	//"recent_path.dat"文件的路径
     wstring m_recent_playlist_data_path;
+    wstring m_recent_medialib_playlist_path;
     wstring m_desktop_path;		//桌面的路径
     wstring m_module_path_reg;  //程序exe文件的路径
     //wstring m_temp_path;		//临时文件夹的路径
+    wstring m_lastfm_path;      ///存储Last.fm数据的路径
+    wstring m_ui_data_path;     //用户自定义界面数据的路径
 
     vector<DeviceInfo> m_output_devices;	//播放设备的信息
 
     vector<CRect> m_screen_rects;                   // 屏幕的范围
-
-    //CMediaClassifier m_artist_classifer{ CMediaClassifier::CT_ARTIST, true };     //将所有歌曲信息按艺术家分类
-    //CMediaClassifier m_album_classifer{ CMediaClassifier::CT_ALBUM, true };       //将所有歌曲信息按唱片集分类
-    //CMediaClassifier m_genre_classifer{ CMediaClassifier::CT_GENRE, true };       //将所有歌曲信息按流派分类
-    //CMediaClassifier m_year_classifer{ CMediaClassifier::CT_YEAR, true };       //将所有歌曲信息按年份分类
 
     LyricSettingData m_lyric_setting_data;			//“选项设置”对话框中“歌词设置”中的数据
     ApperanceSettingData m_app_setting_data;		//“选项设置”对话框中“外观设置”中的数据
@@ -58,25 +53,29 @@ public:
     NonCategorizedSettingData m_nc_setting_data;	//未分类的设置数据
     GlobalHotKeySettingData m_hot_key_setting_data;	//“全局快捷键”设置
     MediaLibSettingData m_media_lib_setting_data;  	//“媒体库”设置
-    CHotkeyManager m_hot_key;
+    CAcceleratorRes m_accelerator_res;
+    CChinesePingyinRes m_chinese_pingyin_res;
+
+    StrTable m_str_table;   // 实际上负责language manger
+    // IconMgr比MenuMgr先构造，后析构，虽然懒加载下不是必须不过语义应当如此
+    IconMgr m_icon_mgr;     // 负责图标句柄缓存与懒加载
+    MenuMgr m_menu_mgr;
 
     UIData m_ui_data;
-    IconSet m_icon_set;			//图标资源
     FontSet m_font_set;			//字体资源
-    MenuSet m_menu_set;			//菜单资源
     ImageSet m_image_set;       //图片资源
 
-    int m_cmd;
+    int m_cmd{};
 
     int m_fps{};
 
-    CString m_window_title;        //窗口的标题
+    wstring m_window_title;         // 窗口的标题
 
     volatile bool m_lyric_download_dialog_exit{ true };		//用于指示歌词下载对话框已经退出
     volatile bool m_batch_download_dialog_exit{ true };		//用于指示歌词批量下载对话框已经退出
     volatile bool m_cover_download_dialog_exit{ true };		//用于指示歌词下载对话框已经退出
     volatile bool m_format_convert_dialog_exit{ true };		//用于指示格式对话框已经退出
-    volatile int m_media_num_added{};                       //更新媒体库时新增的音频文件数量
+    MediaUpdateThreadPara m_media_update_para;
 
     bool m_module_dir_writable{ true };         //指示程序所在目录是否可写
 
@@ -91,8 +90,7 @@ public:
     void LoadConfig();
 
 
-    void LoadIconResource();
-    void InitMenuResourse();
+    void LoadImgResource();
 
     int DPI(int pixel);		//将一个像素值进行DPI变换
     int DPI(double pixel);
@@ -101,19 +99,13 @@ public:
     int DPIRound(double pixel, double round = 0.5);		//对结果进行四舍五入处理
     void GetDPIFromWindow(CWnd* pWnd);
 
-    int GetDPI()
+    int GetDPI() const
     {
         return m_dpi;
     }
 
-    WORD GetCurrentLanguage() const;
-    //bool IsGlobalMultimediaKeyEnabled() const;
-
-    //获取帮助文本
-    CString GetHelpString();
-
     //获取系统信息文本
-    CString GetSystemInfoString();
+    wstring GetSystemInfoString();
 
     void SetAutoRun(bool auto_run);
     bool GetAutoRun();
@@ -121,11 +113,9 @@ public:
 
     void WriteLog(const wstring& log_str, int log_type = NonCategorizedSettingData::LT_ERROR);
 
-    //void StartClassifySongData();
-
     //开启一个后台线程并更新媒体库
-    //refresh: 如果为true，则会自动更新所有最近修改时间比上次获取时新的文件的信息
-    void StartUpdateMediaLib(bool refresh = false);
+    // force为true时强制重新获取媒体库文件夹下的所有歌曲元数据，false时获取修改时间改变的歌曲元数据
+    void StartUpdateMediaLib(bool force);
     bool IsMeidaLibUpdating() const { return m_media_lib_updating; }
     bool IsCheckingForUpdate() const { return m_checking_update; }      //是否正在检查更新
 
@@ -134,23 +124,39 @@ public:
 
     bool IsScintillaLoaded() const;
 
+    LastFM m_lastfm;
+    void LoadLastFMData();
+    void SaveLastFMData();
+    void UpdateLastFMNowPlaying();
+    void UpdateLastFMFavourite(bool favourite);
+    void LastFMScrobble();
+
+    //更新UI中的媒体库项目
+    void UpdateUiMeidaLibItems();
+
 private:
     void LoadSongData();
 
     static LRESULT CALLBACK MultiMediaKeyHookProc(int nCode, WPARAM wParam, LPARAM lParam);
     static UINT CheckUpdateThreadFunc(LPVOID lpParam);	//启动时检查更新线程函数
+    static UINT UpdateLastFMNowPlayingFunProc(LPVOID lpParam);
+    static UINT UpdateLastFMFavouriteFunProc(LPVOID lpParam);
+    static UINT LastFMScrobbleFunProc(LPVOID lpParam);
 
 private:
     HHOOK m_multimedia_key_hook = NULL;
 
     int m_dpi{};
-    bool m_song_data_modified{ false };
 
-    ULONG_PTR m_gdiplusToken;
+    vector<wstring> m_def_lang_list;        // 线程启动时的默认UI语言列表（仅用于GetSystemInfoString）
+
+    ULONG_PTR m_gdiplusToken{};
     bool m_media_lib_updating{ false };
     bool m_checking_update{ false };        //是否正在检查更新
 
     HMODULE m_hScintillaModule{};
+
+    CWinThread* m_media_lib_update_thread{};
 
     // 重写
 public:
@@ -163,6 +169,7 @@ public:
     virtual int ExitInstance();
     afx_msg void OnHelpUpdateLog();
     afx_msg void OnHelpCustomUi();
+    afx_msg void OnHelpFaq();
 };
 
 extern CMusicPlayerApp theApp;

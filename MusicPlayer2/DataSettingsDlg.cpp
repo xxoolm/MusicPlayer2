@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include "MusicPlayer2.h"
 #include "DataSettingsDlg.h"
-#include "afxdialogex.h"
 #include "UpdateHelper.h"
 
 
@@ -27,24 +26,122 @@ bool CDataSettingsDlg::IsAutoRunModified() const
     return m_auto_run_modified;
 }
 
+bool CDataSettingsDlg::InitializeControls()
+{
+    wstring temp;
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_APP_SETTING");
+    SetDlgItemTextW(IDC_TXT_OPT_DATA_APP_SETTING_STATIC, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_UPDATE_AUTO_CHECK");
+    SetDlgItemTextW(IDC_CHECK_UPDATE_CHECK, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_UPDATE_SOURCE_SEL");
+    SetDlgItemTextW(IDC_TXT_OPT_DATA_UPDATE_SOURCE_SEL_STATIC, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_UPDATE_SOURCE_GITHUB");
+    SetDlgItemTextW(IDC_GITHUB_RADIO, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_UPDATE_SOURCE_GITEE");
+    SetDlgItemTextW(IDC_GITEE_RADIO, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_AUTO_RUN");
+    SetDlgItemTextW(IDC_AUTO_RUN_CHECK, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_LANGUAGE_SEL");
+    SetDlgItemTextW(IDC_TXT_OPT_DATA_LANGUAGE_SEL_STATIC, temp.c_str());
+    // IDC_COMBO1
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_DATA_FILE_CFG");
+    SetDlgItemTextW(IDC_TXT_OPT_DATA_DATA_FILE_CFG_STATIC, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_DATA_FILE_SAVE_DIR_APPDATA");
+    SetDlgItemTextW(IDC_SAVE_TO_APPDATA_RADIO, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_DATA_FILE_SAVE_DIR_PROGRAM");
+    SetDlgItemTextW(IDC_SAVE_TO_PROGRAM_DIR_RADIO, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_DATA_FILE_DIR_OPEN");
+    SetDlgItemTextW(IDC_OPEN_CONFIG_PATH_BUTTON, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_CLOSE_MAIN_WINDOW");
+    SetDlgItemTextW(IDC_TXT_OPT_DATA_CLOSE_MAIN_WINDOW_STATIC, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_CLOSE_MAIN_WINDOW_MINIMIZE_NOTIFY_AREA");
+    SetDlgItemTextW(IDC_MINIMIZE_TO_NOTIFY_RADIO, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_CLOSE_MAIN_WINDOW_EXIT");
+    SetDlgItemTextW(IDC_EXIT_PROGRAM_RADIO, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_DL_SETTING");
+    SetDlgItemTextW(IDC_TXT_OPT_DATA_DL_SETTING_STATIC, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_AUTO_DL_LYRIC");
+    SetDlgItemTextW(IDC_LYRIC_AUTO_DOWNLOAD_CHECK, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_AUTO_DL_LYRIC_SAVE_SEL");
+    SetDlgItemTextW(IDC_TXT_OPT_DATA_AUTO_DL_LYRIC_SAVE_SEL_STATIC, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_AUTO_DL_LYRIC_SAVE_SONG_DIR");
+    SetDlgItemTextW(IDC_SAVE_TO_SONG_FOLDER, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_AUTO_DL_LYRIC_SAVE_LYRIC_DIR");
+    SetDlgItemTextW(IDC_SAVE_TO_LYRIC_FOLDER, temp.c_str());
+
+    SetDlgControlText(IDC_DOWN_LOAD_LYRIC_TRANSLATION_FORMAT_STATIC, L"TXT_OPT_DATA_DL_LYRIC_TRANSLATION_FORMAT_SEL");
+    SetDlgControlText(IDC_LYRIC_AND_TRANSLATION_IN_SAME_LINE_RADIO, L"TXT_OPT_DATA_DL_LYRIC_TRANSLATION_FORMAT_SAME_LINE");
+    SetDlgControlText(IDC_LYRIC_AND_TRANSLATION_IN_DIFFERENT_LINE_RADIO, L"TXT_OPT_DATA_DL_LYRIC_TRANSLATION_FORMAT_DIFFERENT_LINE");
+
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_AUTO_DL_COVER");
+    SetDlgItemTextW(IDC_COVER_AUTO_DOWNLOAD_CHECK, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_AUTO_DL_COVER_SAVE_SEL");
+    SetDlgItemTextW(IDC_TXT_OPT_DATA_AUTO_DL_COVER_SAVE_SEL_STATIC, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_AUTO_DL_COVER_SAVE_SONG_DIR");
+    SetDlgItemTextW(IDC_SAVE_TO_SONG_FOLDER3, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_AUTO_DL_COVER_SAVE_COVER_DIR");
+    SetDlgItemTextW(IDC_SAVE_TO_ALBUM_FOLDER3, temp.c_str());
+    temp = theApp.m_str_table.LoadText(L"TXT_OPT_DATA_AUTO_DL_ONLY_WHEN_TAG_FULL");
+    SetDlgItemTextW(IDC_DOWNLOAD_WHEN_TAG_FULL_CHECK, temp.c_str());
+
+    SetDlgControlText(IDC_TXT_OPERATION_SETTINGS_STATIC, L"TXT_OPT_DATA_OPERATION_SETTINGS");
+    SetDlgControlText(IDC_GLOBAL_MOUSE_WHEEL_VOLUME_ADJUSTMENT_CHECK, L"TXT_OPT_DATA_GLOBAL_MOUSE_WHEEL_VOLUME_ADJUSTMENT");
+
+    return false;
+}
+
 void CDataSettingsDlg::DoDataExchange(CDataExchange* pDX)
 {
     CTabDlg::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_SF2_PATH_EDIT, m_sf2_path_edit);
     DDX_Control(pDX, IDC_COMBO1, m_language_combo);
+}
+
+void CDataSettingsDlg::GetDataFromUi()
+{
+    m_data.minimize_to_notify_icon = (((CButton*)GetDlgItem(IDC_MINIMIZE_TO_NOTIFY_RADIO))->GetCheck() != 0);
+    m_data.save_lyric_to_song_folder = (((CButton*)GetDlgItem(IDC_SAVE_TO_SONG_FOLDER))->GetCheck() != 0);
+    m_data.save_album_to_song_folder = (((CButton*)GetDlgItem(IDC_SAVE_TO_SONG_FOLDER3))->GetCheck() != 0);
+    m_data.download_lyric_text_and_translation_in_same_line = (IsDlgButtonChecked(IDC_LYRIC_AND_TRANSLATION_IN_SAME_LINE_RADIO) != 0);
+
+    //获取语言的设置
+    int sel_language = m_language_combo.GetCurSel();
+    if (sel_language == 0)
+        m_data.language_.clear();
+    else
+    {
+        sel_language -= 1;
+        const auto& language_list = theApp.m_str_table.GetLanguageList();
+        if (sel_language >= 0 && sel_language < static_cast<int>(language_list.size()))
+            m_data.language_ = language_list[sel_language].bcp_47;
+    }
+    if (m_data.language_ != theApp.m_general_setting_data.language_)
+    {
+        const wstring& info = theApp.m_str_table.LoadText(L"MSG_OPT_DATA_LANGUAGE_CHANGE_INFO");
+        MessageBox(info.c_str(), NULL, MB_ICONINFORMATION | MB_OK);
+    }
+
+    //获取数据文件保存位置的设置
+    m_data.portable_mode = (IsDlgButtonChecked(IDC_SAVE_TO_PROGRAM_DIR_RADIO) != 0);
+    if (m_data.portable_mode != theApp.m_general_setting_data.portable_mode)
+    {
+        const wstring& info = theApp.m_str_table.LoadText(L"MSG_OPT_DATA_CFG_DIR_CHANGED_INFO");
+        MessageBox(info.c_str(), NULL, MB_ICONINFORMATION | MB_OK);
+    }
+
+    m_data.global_mouse_wheel_volume_adjustment = (IsDlgButtonChecked(IDC_GLOBAL_MOUSE_WHEEL_VOLUME_ADJUSTMENT_CHECK) != 0);
+}
+
+void CDataSettingsDlg::ApplyDataToUi()
+{
+    EnableControl();
 }
 
 
 BEGIN_MESSAGE_MAP(CDataSettingsDlg, CTabDlg)
-    //ON_BN_CLICKED(IDC_ID3V2_FIRST_CHECK, &CDataSettingsDlg::OnBnClickedId3v2FirstCheck)
     ON_BN_CLICKED(IDC_COVER_AUTO_DOWNLOAD_CHECK, &CDataSettingsDlg::OnBnClickedCoverAutoDownloadCheck)
     ON_BN_CLICKED(IDC_LYRIC_AUTO_DOWNLOAD_CHECK, &CDataSettingsDlg::OnBnClickedLyricAutoDownloadCheck)
     ON_BN_CLICKED(IDC_CHECK_UPDATE_CHECK, &CDataSettingsDlg::OnBnClickedCheckUpdateCheck)
-    //ON_BN_CLICKED(IDC_BROWSE_BUTTON, &CDataSettingsDlg::OnBnClickedBrowseButton)
-    ON_BN_CLICKED(IDC_MIDI_USE_INNER_LYRIC_CHECK, &CDataSettingsDlg::OnBnClickedMidiUseInnerLyricCheck)
     ON_BN_CLICKED(IDC_DOWNLOAD_WHEN_TAG_FULL_CHECK, &CDataSettingsDlg::OnBnClickedDownloadWhenTagFullCheck)
-    ON_EN_CHANGE(IDC_SF2_PATH_EDIT, &CDataSettingsDlg::OnEnChangeSf2PathEdit)
-    ON_MESSAGE(WM_EDIT_BROWSE_CHANGED, &CDataSettingsDlg::OnEditBrowseChanged)
     ON_BN_CLICKED(IDC_AUTO_RUN_CHECK, &CDataSettingsDlg::OnBnClickedAutoRunCheck)
     ON_BN_CLICKED(IDC_GITHUB_RADIO, &CDataSettingsDlg::OnBnClickedGithubRadio)
     ON_BN_CLICKED(IDC_GITEE_RADIO, &CDataSettingsDlg::OnBnClickedGiteeRadio)
@@ -60,12 +157,18 @@ BOOL CDataSettingsDlg::OnInitDialog()
     CTabDlg::OnInitDialog();
 
     // TODO:  在此添加额外的初始化
-    //SetBackgroundColor(RGB(255, 255, 255));
 
-    m_language_combo.AddString(CCommon::LoadText(IDS_FOLLOWING_SYSTEM));
-    m_language_combo.AddString(_T("English"));
-    m_language_combo.AddString(_T("简体中文"));
-    m_language_combo.SetCurSel(static_cast<int>(m_data.language));
+    m_language_combo.AddString(theApp.m_str_table.LoadText(L"TXT_OPT_DATA_LANGUAGE_FOLLOWING_SYSTEM").c_str());
+    const auto& language_list = theApp.m_str_table.GetLanguageList();
+    int language_sel{};
+    for (size_t i{}; i < language_list.size(); ++i)
+    {
+        m_language_combo.AddString(language_list[i].display_name.c_str());
+        if (language_list[i].bcp_47 == m_data.language_)
+            language_sel = i + 1;
+    }
+    ASSERT(language_sel != 0 || m_data.language_.empty());  // 仅当设置为“跟随系统(空)”时索引才可能为0
+    m_language_combo.SetCurSel(language_sel);
 
     m_auto_run = theApp.GetAutoRun();
     CheckDlgButton(IDC_AUTO_RUN_CHECK, m_auto_run);
@@ -78,15 +181,14 @@ BOOL CDataSettingsDlg::OnInitDialog()
     CheckDlgButton(IDC_SAVE_TO_PROGRAM_DIR_RADIO, m_data.portable_mode);
     EnableDlgCtrl(IDC_SAVE_TO_PROGRAM_DIR_RADIO, theApp.m_module_dir_writable);
 
-    //((CButton*)GetDlgItem(IDC_ID3V2_FIRST_CHECK))->SetCheck(m_data.id3v2_first);
     ((CButton*)GetDlgItem(IDC_COVER_AUTO_DOWNLOAD_CHECK))->SetCheck(m_data.auto_download_album_cover);
     ((CButton*)GetDlgItem(IDC_LYRIC_AUTO_DOWNLOAD_CHECK))->SetCheck(m_data.auto_download_lyric);
     ((CButton*)GetDlgItem(IDC_DOWNLOAD_WHEN_TAG_FULL_CHECK))->SetCheck(m_data.auto_download_only_tag_full);
     ((CButton*)GetDlgItem(IDC_CHECK_UPDATE_CHECK))->SetCheck(m_data.check_update_when_start);
-    m_sf2_path_edit.SetWindowText(m_data.sf2_path.c_str());
-    CString szFilter = CCommon::LoadText(IDS_SOUND_FONT_FILTER);
-    m_sf2_path_edit.EnableFileBrowseButton(_T("SF2"), szFilter);
-    ((CButton*)GetDlgItem(IDC_MIDI_USE_INNER_LYRIC_CHECK))->SetCheck(m_data.midi_use_inner_lyric);
+
+    CheckDlgButton(IDC_LYRIC_AND_TRANSLATION_IN_SAME_LINE_RADIO, m_data.download_lyric_text_and_translation_in_same_line);
+    CheckDlgButton(IDC_LYRIC_AND_TRANSLATION_IN_DIFFERENT_LINE_RADIO, !m_data.download_lyric_text_and_translation_in_same_line);
+
     if (m_data.minimize_to_notify_icon)
         ((CButton*)GetDlgItem(IDC_MINIMIZE_TO_NOTIFY_RADIO))->SetCheck(TRUE);
     else
@@ -106,14 +208,31 @@ BOOL CDataSettingsDlg::OnInitDialog()
         ((CButton*)GetDlgItem(IDC_SAVE_TO_SONG_FOLDER))->SetCheck(TRUE);
         m_data.save_lyric_to_song_folder = true;
     }
+    
+    // 设置封面存储位置选项
+    if (m_data.save_lyric_to_song_folder)
+        ((CButton*)GetDlgItem(IDC_SAVE_TO_SONG_FOLDER3))->SetCheck(TRUE);
+    else
+        ((CButton*)GetDlgItem(IDC_SAVE_TO_ALBUM_FOLDER3))->SetCheck(TRUE);
+
+    // 判断封面文件夹是否存在
+    bool album_path_exist = CCommon::FolderExist(theApp.m_app_setting_data.album_cover_path);
+    if (!album_path_exist)		// 如果封面文件夹不存在，则禁用“保存到歌词文件夹”单选按钮，并强制选中“保存到歌曲所在目录”
+    {
+        ((CButton*)GetDlgItem(IDC_SAVE_TO_ALBUM_FOLDER3))->EnableWindow(FALSE);
+        ((CButton*)GetDlgItem(IDC_SAVE_TO_ALBUM_FOLDER3))->SetCheck(FALSE);
+        ((CButton*)GetDlgItem(IDC_SAVE_TO_SONG_FOLDER3))->SetCheck(TRUE);
+        m_data.save_album_to_song_folder = true;
+    }
+
+    CheckDlgButton(IDC_GLOBAL_MOUSE_WHEEL_VOLUME_ADJUSTMENT_CHECK, m_data.global_mouse_wheel_volume_adjustment);
 
     m_toolTip.Create(this);
     m_toolTip.SetMaxTipWidth(theApp.DPI(300));
-    m_toolTip.AddTool(GetDlgItem(IDC_DOWNLOAD_WHEN_TAG_FULL_CHECK), CCommon::LoadText(IDS_AUTO_DOWNLOAD_LYRIC_TIP_INFO));
-    //m_toolTip.AddTool(GetDlgItem(IDC_SF2_PATH_EDIT), _T("需要额外的音色库才能播放 MIDI 音乐。"));
-    m_toolTip.AddTool(GetDlgItem(IDC_MIDI_USE_INNER_LYRIC_CHECK), CCommon::LoadText(IDS_MIDI_INNER_LYRIC_TIP_INFO));
+    m_toolTip.AddTool(GetDlgItem(IDC_DOWNLOAD_WHEN_TAG_FULL_CHECK), theApp.m_str_table.LoadText(L"TIP_OPT_DATA_AUTO_DL_ONLY_WHEN_TAG_FULL").c_str());
     m_toolTip.AddTool(GetDlgItem(IDC_SAVE_TO_APPDATA_RADIO), theApp.m_appdata_dir.c_str());
     m_toolTip.AddTool(GetDlgItem(IDC_SAVE_TO_PROGRAM_DIR_RADIO), theApp.m_module_dir.c_str());
+    m_toolTip.AddTool(GetDlgItem(IDC_GLOBAL_MOUSE_WHEEL_VOLUME_ADJUSTMENT_CHECK), theApp.m_str_table.LoadText(L"TXT_OPT_DATA_GLOBAL_MOUSE_WHEEL_VOLUME_ADJUSTMENT_TIP").c_str());
 
     m_toolTip.SetWindowPos(&CWnd::wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
@@ -129,32 +248,25 @@ BOOL CDataSettingsDlg::OnInitDialog()
 
 void CDataSettingsDlg::EnableControl()
 {
-    bool enable = !CPlayer::GetInstance().IsMciCore();
-    m_sf2_path_edit.EnableWindow(enable && theApp.m_format_convert_dialog_exit);		//正在进行格式转换时不允许更改音色库
+    // bool enable = CPlayer::GetInstance().IsBassCore();
+    bool enable = !theApp.m_play_setting_data.use_ffmpeg && !theApp.m_play_setting_data.use_mci;
     CWnd* pWnd = GetDlgItem(IDC_BROWSE_BUTTON);
     if (pWnd != nullptr)
         pWnd->EnableWindow(enable && theApp.m_format_convert_dialog_exit);
-    pWnd = GetDlgItem(IDC_MIDI_USE_INNER_LYRIC_CHECK);
-    if (pWnd != nullptr)
-        pWnd->EnableWindow(enable);
 
     ((CButton*)GetDlgItem(IDC_SAVE_TO_SONG_FOLDER))->EnableWindow(m_data.auto_download_lyric);
     ((CButton*)GetDlgItem(IDC_SAVE_TO_LYRIC_FOLDER))->EnableWindow(m_data.auto_download_lyric && CCommon::FolderExist(theApp.m_lyric_setting_data.lyric_path));
 
+    ((CButton*)GetDlgItem(IDC_SAVE_TO_SONG_FOLDER3))->EnableWindow(m_data.auto_download_album_cover);
+    ((CButton*)GetDlgItem(IDC_SAVE_TO_ALBUM_FOLDER3))->EnableWindow(m_data.auto_download_album_cover && CCommon::FolderExist(theApp.m_app_setting_data.album_cover_path));
 }
-
-
-//void CDataSettingsDlg::OnBnClickedId3v2FirstCheck()
-//{
-//	// TODO: 在此添加控件通知处理程序代码
-//	m_data.id3v2_first = (((CButton*)GetDlgItem(IDC_ID3V2_FIRST_CHECK))->GetCheck() != 0);
-//}
 
 
 void CDataSettingsDlg::OnBnClickedCoverAutoDownloadCheck()
 {
     // TODO: 在此添加控件通知处理程序代码
     m_data.auto_download_album_cover = (((CButton*)GetDlgItem(IDC_COVER_AUTO_DOWNLOAD_CHECK))->GetCheck() != 0);
+    EnableControl();
 }
 
 
@@ -183,13 +295,6 @@ BOOL CDataSettingsDlg::PreTranslateMessage(MSG* pMsg)
 }
 
 
-void CDataSettingsDlg::OnBnClickedMidiUseInnerLyricCheck()
-{
-    // TODO: 在此添加控件通知处理程序代码
-    m_data.midi_use_inner_lyric = (((CButton*)GetDlgItem(IDC_MIDI_USE_INNER_LYRIC_CHECK))->GetCheck() != 0);
-}
-
-
 void CDataSettingsDlg::OnBnClickedDownloadWhenTagFullCheck()
 {
     // TODO: 在此添加控件通知处理程序代码
@@ -197,54 +302,12 @@ void CDataSettingsDlg::OnBnClickedDownloadWhenTagFullCheck()
 }
 
 
-void CDataSettingsDlg::OnEnChangeSf2PathEdit()
-{
-    // TODO:  如果该控件是 RICHEDIT 控件，它将不
-    // 发送此通知，除非重写 CTabDlg::OnInitDialog()
-    // 函数并调用 CRichEditCtrl().SetEventMask()，
-    // 同时将 ENM_CHANGE 标志“或”运算到掩码中。
-    if (m_sf2_path_edit.GetModify())
-    {
-        CString str;
-        m_sf2_path_edit.GetWindowText(str);
-        m_data.sf2_path = str;
-    }
-
-    // TODO:  在此添加控件通知处理程序代码
-}
-
-
 void CDataSettingsDlg::OnOK()
 {
     // TODO: 在此添加专用代码和/或调用基类
 
-    m_data.minimize_to_notify_icon = (((CButton*)GetDlgItem(IDC_MINIMIZE_TO_NOTIFY_RADIO))->GetCheck() != 0);
-    m_data.save_lyric_to_song_folder = (((CButton*)GetDlgItem(IDC_SAVE_TO_SONG_FOLDER))->GetCheck() != 0);
-
-    //获取语言的设置
-    m_data.language = static_cast<Language>(m_language_combo.GetCurSel());
-    if (m_data.language != theApp.m_general_setting_data.language)
-    {
-        MessageBox(CCommon::LoadText(IDS_LANGUAGE_CHANGE_INFO), NULL, MB_ICONINFORMATION | MB_OK);
-    }
-
-    //获取数据文件保存位置的设置
-    m_data.portable_mode = (IsDlgButtonChecked(IDC_SAVE_TO_PROGRAM_DIR_RADIO) != 0);
-    if (m_data.portable_mode != theApp.m_general_setting_data.portable_mode)
-    {
-        MessageBox(CCommon::LoadText(IDS_CFG_DIR_CHANGED_INFO), NULL, MB_ICONINFORMATION | MB_OK);
-    }
 
     CTabDlg::OnOK();
-}
-
-
-afx_msg LRESULT CDataSettingsDlg::OnEditBrowseChanged(WPARAM wParam, LPARAM lParam)
-{
-    CString str;
-    m_sf2_path_edit.GetWindowText(str);
-    m_data.sf2_path = str;
-    return 0;
 }
 
 

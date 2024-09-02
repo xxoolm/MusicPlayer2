@@ -1,28 +1,32 @@
 ﻿#pragma once
+#include "BaseDialog.h"
 #include "PlayerToolBar.h"
 #include "PlayerProgressBar.h"
 #include "BrowseEdit.h"
+#include "ListCtrlEx.h"
 
 // CTestDlg 对话框
 
-class CTestDlg : public CDialog
+class CTestDlg : public CBaseDialog
 {
-	DECLARE_DYNAMIC(CTestDlg)
+    DECLARE_DYNAMIC(CTestDlg)
 
 public:
-	CTestDlg(CWnd* pParent = nullptr);   // 标准构造函数
-	virtual ~CTestDlg();
+    CTestDlg(CWnd* pParent = nullptr);   // 标准构造函数
+    virtual ~CTestDlg();
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_TEST_DIALOG };
+    enum { IDD = IDD_TEST_DIALOG };
 #endif
 
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+    virtual CString GetDialogName() const override;
+    virtual bool InitializeControls() override;
+    virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
-	DECLARE_MESSAGE_MAP()
+    DECLARE_MESSAGE_MAP()
 
 private:
     CPlayerToolBar m_toolbar;
@@ -36,6 +40,7 @@ private:
     CBitmap bitmap;
     CBitmap bitmap_copy;
 
+    CListCtrlEx m_list_ctrl;
 
 public:
     virtual BOOL OnInitDialog();

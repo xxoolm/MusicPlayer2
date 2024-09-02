@@ -1,9 +1,7 @@
 ﻿#pragma once
-#include "stdafx.h"
 #include "ColorConvert.h"
 #include "DrawCommon.h"
 #include "Common.h"
-#include "resource.h"
 
 namespace CONSTVAL
 {
@@ -121,26 +119,22 @@ public:
 
 struct FontSet
 {
-    UIFont font9;				//普通的字体
-    UIFont font8;				//显示播放时间
-    UIFont font10;				//界面2的歌曲标题
-    UIFont font11;
-    UIFont font12;           //界面4的歌曲标题
+    const int FONT_SIZE_MIN{ 8 };
+    const int FONT_SIZE_MAX{ 16 };
+    std::map<int, UIFont> fonts;    //不同大小的默认字体
 
+    UIFont dlg;                 // 窗口控件字体
     UIFont lyric;				//歌词字体
     UIFont lyric_translate;		//歌词翻译的字体
     UIFont cortana;				//搜索框字体
     UIFont cortana_translate;	//搜索框翻译字体
 
 
-    void Init()
-    {
-        font9.SetFont(9, CCommon::LoadText(IDS_DEFAULT_FONT));
-        font8.SetFont(8, CCommon::LoadText(IDS_DEFAULT_FONT));
-        font10.SetFont(10, CCommon::LoadText(IDS_DEFAULT_FONT));
-        font11.SetFont(11, CCommon::LoadText(IDS_DEFAULT_FONT));
-        font12.SetFont(12, CCommon::LoadText(IDS_DEFAULT_FONT));
-    }
+    void Init(LPCTSTR font_name);
+
+    //获取一个指定大小的字体（目前支持8~16）
+    UIFont& GetFontBySize(int font_size);
+
 };
 
 
@@ -184,17 +178,19 @@ struct DesktopLyricSettingData		//桌面歌词设置
     bool hide_lyric_window_when_paused{ false };	//暂停时隐藏歌词窗口
     bool lyric_background_penetrate{ false };
     bool show_unlock_when_locked{ true };           //桌面歌词锁定时显示解锁图标
-    Alignment lyric_align{ Alignment::CENTER }; //歌词的对齐方式
+    Alignment lyric_align{ Alignment::AUTO };   //歌词的对齐方式
 };
 
 struct LyricSettingData
 {
     bool lyric_karaoke_disp{ true };			//可以是否以卡拉OK样式显示
     bool lyric_fuzzy_match{ true };				//歌词模糊匹配
-    bool save_lyric_in_offset{};				//是否将歌词保存在offset标签中，还是保存在每个时间标签中
+    // bool save_lyric_in_offset{};				//是否将歌词保存在offset标签中，还是保存在每个时间标签中
     wstring lyric_path;							//歌词文件夹的路径
     bool use_inner_lyric_first{};				//优先使用内嵌歌词
     bool show_translate{ true };		        //歌词是否显示翻译
+    bool donot_show_blank_lines{};              //单行和双行显示模式下不显示空白行
+    bool show_song_info_if_lyric_not_exist{};   //是否在没有歌词时显示歌曲信息
 
     enum LyricSavePolicy		//歌词保存策略
     {
@@ -207,7 +203,7 @@ struct LyricSettingData
 
     FontInfo lyric_font;						//歌词字体
     int lyric_line_space{ 2 };					//歌词的行间距
-    Alignment lyric_align{ Alignment::CENTER }; //歌词的对齐方式
+    Alignment lyric_align{ Alignment::AUTO };   //歌词的对齐方式
 
     bool cortana_info_enable{};				    //是否允许在Cortana的搜索框中显示信息
     bool cortana_show_lyric{ true };            //是否在Cortana搜索框中显示歌词
@@ -220,7 +216,7 @@ struct LyricSettingData
     bool cortana_lyric_keep_display{ false };	//搜索框歌词是否在暂停时保持显示
     bool cortana_show_spectrum{ false };		//是否在搜索框显示频谱
     bool cortana_opaque{ false };				//搜索框不透明
-    Alignment cortana_lyric_align{ Alignment::CENTER };               //搜索框歌词对齐方式
+    Alignment cortana_lyric_align{ Alignment::AUTO };           //搜索框歌词对齐方式
     bool show_default_album_icon_in_search_box{ false };      //没有歌词时搜索框显示黑色胶片图标
     COLORREF cortana_transparent_color{};
 
@@ -242,9 +238,12 @@ struct ApperanceSettingData
     bool spectrum_low_freq_in_center{ false };  //频谱分析低频部分显示在中间
     bool use_old_style_specturm{ false };       //使用旧风格的频谱分析显示
     int background_transparency{ 80 };			//背景的透明度
+
     bool use_out_image{ true };					//使用外部图片作为专辑封面
     bool use_inner_image_first{ true };			//优先使用内嵌专辑封面
+    wstring album_cover_path;                         // 专辑封面存储路径
     vector<wstring> default_album_name;			//默认的专辑封面文件名
+
     bool background_gauss_blur{ true };			//背景高斯模糊
     int gauss_blur_radius{ 60 };				//高斯模糊半径*10
     bool lyric_background{ true };				//歌词界面背景
@@ -264,8 +263,23 @@ struct ApperanceSettingData
 
     bool use_desktop_background{ false };   //使用桌面壁纸作为背景
 
+    bool always_show_statusbar{ false };    //总是显示状态栏
     bool show_fps{ true };              //是否在状态栏显示帧率
     bool show_next_track{ false };      //是否在状态栏显示下一首播放曲目
+
+    bool show_window_frame{ true };     //显示标准窗口边框
+    bool show_minimize_btn_in_titlebar{ true };     //是否在标题栏显示“最小化”按钮
+    bool show_maximize_btn_in_titlebar{ true };     //是否在标题栏显示“最大化”按钮
+    bool show_minimode_btn_in_titlebar{ true };     //是否在标题栏显示“迷你模式”按钮
+    bool show_fullscreen_btn_in_titlebar{ true };   //是否在标题栏显示“全屏模式”按钮
+    bool show_skin_btn_in_titlebar{ false };        //是否在标题栏显示“切换界面”按钮
+    bool show_settings_btn_in_titlebar{ false };    //是否在标题栏显示“设置”按钮
+    bool show_dark_light_btn_in_titlebar{ false };  //是否在标题栏显示“深色模式/浅色模式”按钮
+    int TitleDisplayItem() const;
+
+    //如果为true时，当系统为Windows10/11时，如果使用的是自绘标题栏，则去掉标题栏顶部的白边
+    //（目前还存在一些问题，当窗口得到或失去焦点时，窗口会闪烁）
+    bool remove_titlebar_top_frame{ false };
 };
 
 struct GeneralSettingData
@@ -274,14 +288,15 @@ struct GeneralSettingData
     bool auto_download_lyric{ false };			//是否自动下载歌词
     bool auto_download_album_cover{ true };		//是否自动下载专辑封面
     bool auto_download_only_tag_full{ true };	//仅在歌曲信息完整时自动下载
-    bool save_lyric_to_song_folder{ true };     //将歌词文件保存在歌曲文件夹
+    bool save_lyric_to_song_folder{ true };     // 将自动下载的歌词文件保存在歌曲文件夹
+    bool save_album_to_song_folder{ true };     // 将自动下载的封面文件保存在歌曲文件夹
+    bool download_lyric_text_and_translation_in_same_line{ true };  //下载的歌词原文和翻译在同一行
     bool check_update_when_start{ true };		//是否在程序启动时检查更新
     int update_source{};                        //更新源。0: GitHub; 1: Gitee
-    wstring sf2_path;							//MIDI音色库路径
-    bool midi_use_inner_lyric{ false };			//播放MIDI音乐时显示内嵌歌词
     bool minimize_to_notify_icon{ false };		//是否最小到通知区图标
+    bool global_mouse_wheel_volume_adjustment{ true };  //全局鼠标滚轮音量调节
 
-    Language language;
+    wstring language_;                          // 这个是设置状态（空字符串为跟随系统）
     bool portable_mode{ false };                //如果为true，则程序所有数据都保存到exe所在目录下，否则保存到Appdata\Romaing目录下
 };
 
@@ -296,8 +311,27 @@ struct PlaySettingData
     int device_selected{};
     bool fade_effect{ true };                   //播放淡入淡出效果
     int fade_time{ 500 };                      //淡入淡出时间（毫秒）
+    bool use_media_trans_control{};             //使用系统MediaTransportControls
 
     bool use_mci{ false };              //是否使用MCI内核
+    /// 是否使用ffmpeg内核
+    bool use_ffmpeg{ false };
+    /// ffmpeg内核缓存时长（单位：s）
+    int ffmpeg_core_cache_length { 15 };
+    /// ffmpeg内核最大重试次数
+    int ffmpeg_core_max_retry_count { 3 };
+    /// ffmpeg内核非本地文件重试间隔时间（单位s）
+    int ffmpeg_core_url_retry_interval { 5 };
+    /// ffmpeg内核是否启用WASAPI
+    int ffmpeg_core_enable_WASAPI { false };
+    /// ffmpeg内核是否启用WASAPI独占模式
+    int ffmpeg_core_enable_WASAPI_exclusive_mode { false };
+    /// ffmpeg内核seek等操作最大等待时间
+    int ffmpeg_core_max_wait_time { 3000 };
+
+    //MIDI设置
+    wstring sf2_path;							//MIDI音色库路径
+    bool midi_use_inner_lyric{ false };			//播放MIDI音乐时显示内嵌歌词
 };
 
 struct GlobalHotKeySettingData
@@ -314,26 +348,40 @@ enum MediaLibDisplayItem
     MLDI_YEAR = (1 << 3),
     MLDI_TYPE = (1 << 4),
     MLDI_BITRATE = (1 << 5),
-    MLDI_ALL = (1 << 6),
-    MLDI_RECENT = (1 << 7),
-    MLDI_FOLDER_EXPLORE = (1 << 8),
-    MLDI_RATING = (1 << 9)
+    MLDI_RATING = (1 << 6),
+    MLDI_ALL = (1 << 7),
+    MLDI_RECENT = (1 << 8),
+    MLDI_FOLDER_EXPLORE = (1 << 9)
 };
 
 struct MediaLibSettingData
 {
     vector<wstring> media_folders;      //媒体库文件夹浏览中显示的文件夹
+    vector<wstring> artist_split_ext;   // 艺术家分割例外，设置名字本身含有分隔符（/;&、）的艺术家（22/7）
     bool hide_only_one_classification;  //媒体库中将只有一项的分类归到其他类中
     bool disable_delete_from_disk;      //禁用从磁盘删除
     bool show_tree_tool_tips;           //树控件显示鼠标提示
     bool update_media_lib_when_start_up;    //启动时自动更新媒体库
+    bool ignore_too_short_when_update;      // 自动更新/刷新媒体库时忽略时长低于阈值的文件（不影响手动加入）
+    int file_too_short_sec;                 // 音频低时长阈值（清理媒体库功能也使用这个设置）
+    bool remove_file_not_exist_when_update{};   //更新媒体库时移除不存在的音频文件
     bool disable_drag_sort;				//禁止通过拖放排序
     DisplayFormat display_format{};		//播放列表中项目的显示样式
-    bool ignore_songs_already_in_playlist{ true };  //向播放列表中添加曲目时忽略已存在的曲目
-    bool show_playlist_tooltip;         //显示播放列表工具提示
+    bool insert_begin_of_playlist{ false };         // 向播放列表添加歌曲时插入开头而不是追加到末尾
+    bool show_playlist_tooltip{};         //显示播放列表工具提示
+    bool float_playlist_follow_main_wnd{};  //浮动播放列表跟随主窗口
+    bool playlist_btn_for_float_playlist{ false };      // 指定主界面中进度条右侧的“显示/隐藏播放列表”按钮的功能是否为显示浮动播放列表
+    int playlist_item_height{ 24 };
     RecentPlayedRange recent_played_range{};	//最近播放曲目列表的显示范围
     int display_item{};                 //媒体库显示的项目
     bool write_id3_v2_3{ false };       //写入的ID3V2版本是否为2.3，否则为2.4
+    bool enable_lastfm { false };       ///是否启用Last.fm相关功能
+    int lastfm_least_perdur { 50 };     ///将记录写入缓存要求播放的百分比
+    int lastfm_least_dur { 60 };        ///将记录写入缓存要求播放的秒数
+    bool lastfm_auto_scrobble { true }; ///是否自动上传缓存里的记录
+    int lastfm_auto_scrobble_min { 1 }; ///自动上传缓存里的记录的下限
+    bool lastfm_enable_https { false }; ///是否使用HTTPS与last.fm服务器通信
+    bool lastfm_enable_nowplaying{ true }; ///是否上传当前播放歌曲
 };
 
 struct NonCategorizedSettingData
@@ -348,9 +396,8 @@ struct NonCategorizedSettingData
     bool always_on_top{ false };	//是否总是置顶
     wstring default_osu_img;
 
-    bool float_playlist{ false };		//浮动播放列表
+    bool float_playlist{ false };		//浮动播放列表（不应该用此变量来判断浮动播放列表是否存在）
     CSize playlist_size{ 320, 530 };		//浮动播放列表的大小
-    bool playlist_btn_for_float_playlist{ false };		//指定主界面中进度条右侧的“显示/隐藏播放列表”按钮的功能是否为显示浮动播放列表
 
     int max_album_cover_size{ 800 };
     bool show_debug_info{ false };
@@ -359,6 +406,7 @@ struct NonCategorizedSettingData
     int dark_mode_default_transparency{ 40 };
 
     vector<wstring> default_file_type;
+    vector<wstring> user_defined_type_ffmpeg;   //FFMPEG内核时用户添加的文件格式扩展名
 
     enum eLogType
     {
@@ -370,157 +418,6 @@ struct NonCategorizedSettingData
     int debug_log{ 0 };     //是否写入日志信息
 };
 
-struct IconRes
-{
-private:
-    HICON hIcon{};
-    HICON hIconDark{};
-    HICON hIconLarge{};
-    HICON hIconDarkLarge{};
-    CSize iconSize{};
-    CSize iconSizeLarge{};
-
-public:
-    const HICON& GetIcon(bool dark = false, bool large = false) const
-    {
-        if (large)
-            return (dark && hIconDarkLarge != NULL ? hIconDarkLarge : hIconLarge);
-        else
-            return (dark && hIconDark != NULL ? hIconDark : hIcon);
-    }
-
-    void Load(UINT id, UINT id_dark, int size)
-    {
-        int size_large = static_cast<int>(size * CONSTVAL::FULL_SCREEN_ZOOM_FACTOR);
-
-        if (size < 32)
-            size = CCommon::IconSizeNormalize(size);
-        if (size_large < 32)
-            size_large = CCommon::IconSizeNormalize(size_large);
-
-        if (id != 0)
-        {
-            hIcon = CDrawCommon::LoadIconResource(id, size, size);
-            hIconLarge = CDrawCommon::LoadIconResource(id, size_large, size_large);
-        }
-        if (id_dark != 0)
-        {
-            hIconDark = CDrawCommon::LoadIconResource(id_dark, size, size);
-            hIconDarkLarge = CDrawCommon::LoadIconResource(id_dark, size_large, size_large);
-        }
-        iconSize.cx = iconSize.cy = size;
-        iconSizeLarge.cx = iconSizeLarge.cy = size_large;
-    }
-
-    const CSize& GetSize(bool large = false) const
-    {
-        return (large ? iconSizeLarge : iconSize);
-    }
-};
-
-struct IconSet
-{
-    //界面图标
-    IconRes app;
-    HICON default_cover;
-    HICON default_cover_small;
-    HICON default_cover_not_played;
-    HICON default_cover_small_not_played;
-    IconRes default_cover_toolbar;
-    IconRes default_cover_toolbar_not_played;
-    IconRes skin;
-    IconRes eq;
-    IconRes setting;
-    IconRes mini;
-    IconRes play_oder;
-    IconRes play_shuffle;
-    IconRes play_random;
-    IconRes loop_playlist;
-    IconRes loop_track;
-    IconRes play_track;
-    IconRes previous;
-    IconRes play;
-    IconRes pause;
-    IconRes next;
-    IconRes stop;
-    IconRes info;
-    IconRes select_folder;
-    IconRes media_lib;
-    IconRes show_playlist;
-    IconRes find_songs;
-    IconRes full_screen;
-    IconRes full_screen1;
-    IconRes menu;
-    IconRes favourite;
-    IconRes heart;
-    IconRes double_line;
-    IconRes lock;
-    IconRes close;
-    IconRes edit;
-    IconRes add;
-    IconRes artist;
-    IconRes album;
-    IconRes genre;
-    IconRes year;
-    IconRes folder_explore;
-    IconRes lyric_forward;
-    IconRes lyric_delay;
-    IconRes recent_songs;
-    IconRes volume1;
-    IconRes volume2;
-    IconRes volume3;
-    IconRes volume0;
-
-    IconRes stop_l;
-    IconRes previous_l;
-    IconRes play_l;
-    IconRes pause_l;
-    IconRes next_l;
-
-    IconRes play_new;
-    IconRes pause_new;
-    IconRes previous_new;
-    IconRes next_new;
-
-    IconRes app_close;
-    IconRes maximize;
-    IconRes minimize;
-    IconRes restore;
-
-    //菜单图标（仅16x16）
-    HICON stop_new;
-    HICON save_new;
-    HICON save_as;
-    HICON music;
-    HICON file_relate;
-    HICON online;
-    HICON play_pause;
-    HICON convert;
-    HICON download;
-    HICON download1;
-    HICON help;
-    HICON ff_new;
-    HICON rew_new;
-    HICON playlist_dock;
-    HICON playlist_float;
-    HICON statistics;
-    HICON pin;
-    HICON exit;
-    HICON album_cover;
-    HICON dark_mode;
-    HICON lyric;
-    HICON rename;
-    HICON tag;
-    HICON star;
-
-    HICON ok;
-    IconRes locate;
-    HICON expand;
-
-    //通知区图标
-    HICON notify_icons[MAX_NOTIFY_ICON];
-};
-
 
 //界面相关的一些选项
 struct UIData
@@ -528,48 +425,29 @@ struct UIData
     bool narrow_mode;					//窄界面模式
     bool show_playlist{ true };
     bool show_menu_bar{ true };
-    bool show_window_frame{ true };     //显示标准窗口边框
     bool full_screen{ false };
-    bool always_show_statusbar{ false };    //总是显示状态栏
 
     int draw_area_width;                //绘图区的宽度
     int draw_area_height;               //绘图区的高度
     CImage default_background;			//默认的背景
     CCriticalSection default_background_sync;
+
+    bool ShowWindowMenuBar() const ;/* { return show_menu_bar && show_window_frame && !full_screen; }*/
+    bool ShowUiMenuBar() const;/* { return show_menu_bar && !show_window_frame && !full_screen; }*/
 };
 
-
-struct MenuSet
-{
-    CMenu m_main_menu;				//菜单栏上的菜单
-    CMenu m_list_popup_menu;		//播放列表右键菜单
-    CMenu m_main_menu_popup;		//按住Shift键时弹出的右键菜单
-    CMenu m_popup_menu;			    //歌词右键菜单
-    CMenu m_main_popup_menu;
-    CMenu m_playlist_btn_menu;		//播放列表按钮上的右键菜单
-    CMenu m_playlist_toolbar_menu;
-    CMenu m_lyric_default_style;     //桌面歌词预设方案菜单
-    CMenu m_media_lib_popup_menu;
-    CMenu m_media_lib_folder_menu;      //媒体库-文件夹的右键菜单
-    CMenu m_media_lib_playlist_menu;      //媒体库-播放列表的右键菜单
-    CMenu m_notify_menu;                //通知区图标右键菜单
-    CMenu m_mini_mode_menu;             //迷你模式右键菜单
-    CMenu m_property_cover_menu;        //属性——专辑封面中的右键菜单
-    CMenu m_property_menu;
-    CMenu m_recent_folder_playlist_menu;
-};
 
 struct ImageSet
 {
-    Gdiplus::Image* default_cover;
-    Gdiplus::Image* default_cover_not_played;
-    string default_cover_data;
-    string default_cover_not_played_data;
+    Gdiplus::Image* default_cover_img{};
+    Gdiplus::Image* default_cover_not_played_img{};
+    string default_cover_img_data;
+    string default_cover_not_played_img_data;
 
     ~ImageSet()
     {
-        SAFE_DELETE(default_cover);
-        SAFE_DELETE(default_cover_not_played);
+        SAFE_DELETE(default_cover_img);
+        SAFE_DELETE(default_cover_not_played_img);
     }
 };
 
@@ -590,4 +468,13 @@ public:
 
 private:
     bool& m_flag;
+};
+
+
+struct MediaUpdateThreadPara
+{
+    int num_added{};                       //更新媒体库时新增（包括更新）的音频文件数量
+    int process_percent{};                  // 更新媒体库进度%
+    bool thread_exit{};             //如果为true，则线程应该退出
+    bool force;                     // 为true时无视修改时间强制刷新
 };

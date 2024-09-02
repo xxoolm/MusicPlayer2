@@ -4,16 +4,15 @@
 #include "stdafx.h"
 #include "MusicPlayer2.h"
 #include "MediaLibStatisticsDlg.h"
-#include "afxdialogex.h"
 #include "SongDataManager.h"
 #include "MediaLibHelper.h"
 
 // CMediaLibStatisticsDlg 对话框
 
-IMPLEMENT_DYNAMIC(CMediaLibStatisticsDlg, CBaseDialog)
+IMPLEMENT_DYNAMIC(CMediaLibStatisticsDlg, CSimplePropertiesDlg)
 
 CMediaLibStatisticsDlg::CMediaLibStatisticsDlg(CWnd* pParent /*=nullptr*/)
-	: CBaseDialog(IDD_SELECT_ITEM_DIALOG, pParent)
+    : CSimplePropertiesDlg(pParent)
 {
 
 }
@@ -22,19 +21,12 @@ CMediaLibStatisticsDlg::~CMediaLibStatisticsDlg()
 {
 }
 
-void CMediaLibStatisticsDlg::DoDataExchange(CDataExchange* pDX)
-{
-	CBaseDialog::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_LIST1, m_list_ctrl);
-}
-
-
 CString CMediaLibStatisticsDlg::GetDialogName() const
 {
     return _T("MediaLibStatisticsDlg");
 }
 
-BEGIN_MESSAGE_MAP(CMediaLibStatisticsDlg, CBaseDialog)
+BEGIN_MESSAGE_MAP(CMediaLibStatisticsDlg, CSimplePropertiesDlg)
 END_MESSAGE_MAP()
 
 
@@ -43,54 +35,44 @@ END_MESSAGE_MAP()
 
 BOOL CMediaLibStatisticsDlg::OnInitDialog()
 {
-    CBaseDialog::OnInitDialog();
+    CSimplePropertiesDlg::OnInitDialog();
 
     // TODO:  在此添加额外的初始化
-    
-    SetWindowText(CCommon::LoadText(IDS_MEDIALIB_STATISTICS));
-    SetIcon(theApp.m_icon_set.info.GetIcon(true), FALSE);
 
-    //初始化控件
-    CWnd* ok_btn{ GetDlgItem(IDOK) };
-    if (ok_btn != nullptr)
-        ok_btn->ShowWindow(SW_HIDE);
-    SetDlgItemText(IDCANCEL, CCommon::LoadText(IDS_CLOSE));
+    SetWindowTextW(theApp.m_str_table.LoadText(L"TITLE_LIB_STATISTICS").c_str());
+    SetIcon(IconMgr::IconType::IT_Info, FALSE);
 
-    //初始化列表
-    CRect rect;
-    m_list_ctrl.GetWindowRect(rect);
-    m_list_ctrl.SetExtendedStyle(m_list_ctrl.GetExtendedStyle() | LVS_EX_GRIDLINES);
-    int width0 = rect.Width() / 2;
-    int width1 = rect.Width() - width0 - theApp.DPI(20) - 1;
-    m_list_ctrl.InsertColumn(0, CCommon::LoadText(IDS_ITEM), LVCFMT_LEFT, width0);
-    m_list_ctrl.InsertColumn(1, CCommon::LoadText(IDS_VLAUE), LVCFMT_LEFT, width1);
+    return TRUE;  // return TRUE unless you set the focus to a control
+                  // 异常: OCX 属性页应返回 FALSE
+}
 
-    //插入列
-    m_list_ctrl.InsertItem(RI_ARTIST, CCommon::LoadText(IDS_ARTIST));   //艺术家
-    m_list_ctrl.InsertItem(RI_ALBUM, CCommon::LoadText(IDS_ALBUM));     //唱片
-    m_list_ctrl.InsertItem(RI_GENRE, CCommon::LoadText(IDS_GENRE));     //流派
-    m_list_ctrl.InsertItem(RI_TOTAL, CCommon::LoadText(IDS_TOTAL_TRACKS));      //曲目总数
-    m_list_ctrl.InsertItem(RI_PLAYED, CCommon::LoadText(IDS_TRACKS_PLAYED));    //播放过的曲目数
-
-    //设置数值
+void CMediaLibStatisticsDlg::InitData()
+{
     std::set<std::wstring, StringComparerNoCase> artist_set;
     std::set<std::wstring, StringComparerNoCase> album_set;
     std::set<std::wstring, StringComparerNoCase> genre_set;
     int played_num{};
-    for (const auto& item : CSongDataManager::GetInstance().GetSongData())
-    {
-        artist_set.emplace(item.second.artist);
-        album_set.emplace(item.second.album);
-        genre_set.emplace(item.second.genre);
-        if (item.second.last_played_time > 0)
-            played_num++;
-    }
-    m_list_ctrl.SetItemText(RI_ARTIST, 1, std::to_wstring(artist_set.size()).c_str());
-    m_list_ctrl.SetItemText(RI_ALBUM, 1, std::to_wstring(album_set.size()).c_str());
-    m_list_ctrl.SetItemText(RI_GENRE, 1, std::to_wstring(genre_set.size()).c_str());
-    m_list_ctrl.SetItemText(RI_TOTAL, 1, std::to_wstring(CSongDataManager::GetInstance().GetSongData().size()).c_str());
-    m_list_ctrl.SetItemText(RI_PLAYED, 1, std::to_wstring(played_num).c_str());
+    size_t total_size{};
+    CSongDataManager::GetInstance().GetSongData([&](const CSongDataManager::SongDataMap& song_data_map) {
+        for (const auto& item : song_data_map)
+        {
+            //处理多个艺术家情况
+            std::vector<std::wstring> artist_list;
+            item.second.GetArtistList(artist_list);
+            for (const auto& artist : artist_list)
+                artist_set.emplace(artist);
 
-    return TRUE;  // return TRUE unless you set the focus to a control
-                  // 异常: OCX 属性页应返回 FALSE
+            album_set.emplace(item.second.album);
+            genre_set.emplace(item.second.genre);
+            if (item.second.last_played_time > 0)
+                played_num++;
+        }
+        total_size = song_data_map.size();
+    });
+
+    m_items.emplace_back(theApp.m_str_table.LoadText(L"TXT_ARTIST"), std::to_wstring(artist_set.size()));   //艺术家
+    m_items.emplace_back(theApp.m_str_table.LoadText(L"TXT_ALBUM"), std::to_wstring(album_set.size()));     //唱片集
+    m_items.emplace_back(theApp.m_str_table.LoadText(L"TXT_GENRE"), std::to_wstring(genre_set.size()));     //流派
+    m_items.emplace_back(theApp.m_str_table.LoadText(L"TXT_LIB_STATISTICS_TOTAL_NUM_OF_TRACK"), std::to_wstring(total_size));       //曲目总数
+    m_items.emplace_back(theApp.m_str_table.LoadText(L"TXT_LIB_STATISTICS_NUM_OF_TRACK_PLAYED"), std::to_wstring(played_num));      //播放过的曲目数
 }

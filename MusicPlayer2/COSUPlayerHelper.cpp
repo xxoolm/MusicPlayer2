@@ -1,6 +1,8 @@
 ﻿#include "stdafx.h"
 #include "COSUPlayerHelper.h"
 #include "FilePathHelper.h"
+#include "AudioCommon.h"
+#include "Common.h"
 
 
 COSUPlayerHelper::COSUPlayerHelper()
@@ -25,7 +27,7 @@ bool COSUPlayerHelper::IsOsuFolder(const std::wstring & strPath)
     wstring parent_dir = path_helper.GetParentDir();
 
     //判断一个文件是否为osu的Songs目录：它的父级目录有osu!.exe文件且文件夹是Songs
-    return CCommon::FileExist(parent_dir + L"osu!.exe") && folder_path.substr(folder_path.size() - 6, 5) == L"Songs";
+    return folder_path.size() > 7 && folder_path.substr(folder_path.size() - 6, 5) == L"Songs" && CCommon::FileExist(parent_dir + L"osu!.exe");
 }
 
 bool COSUPlayerHelper::IsOsuFile(const std::wstring& strPath)
@@ -65,10 +67,11 @@ void COSUPlayerHelper::GetOSUAudioFiles(wstring path, vector<wstring>& files)
         CCommon::GetFiles(path + folder_name + L"\\*.osu", osu_list);
         if(!osu_list.empty())
         {
-            COSUFile osu_file{ (path + folder_name + L"\\" + osu_list.front()).c_str() };
-            wstring file_name = osu_file.GetAudioFile();
-            wstring song_info = path + folder_name + L"\\" + file_name;
-            files.push_back(song_info);
+            COSUFile osu_file{ (path + folder_name + L'\\' + osu_list.front()).c_str() };
+            wstring file_name = path + folder_name + L'\\' + osu_file.GetAudioFileName();
+            // 这里的file_name大小写可能与实际文件不同会导致自动更新/播放时媒体库出现大小写各一份，这里统一以音频文件为准
+            if (CCommon::CheckAndFixFile(file_name))
+                files.push_back(file_name);
         }
     }
 }
@@ -138,28 +141,44 @@ wstring COSUPlayerHelper::GetAlbumCover(wstring file_path)
 	    {
             album_cover_file_name = image_list[0];
 	    }
-	    //else
-	    //{
-		   // //如果没有jpg图片，则查找png图片
-		   // vector<wstring> image_list;
-		   // CCommon::GetFiles(dir + L"*.png", image_list);
-		   // if (!image_list.empty())
-		   // {
-			  //  size_t max_file_size{};
-			  //  wstring max_size_file_name;
-			  //  for (const auto& image_file : image_list)
-			  //  {
-				 //   //由于OSU歌曲目录下可能会有很多皮肤素材png图片，因此查找最大的图片作为背景图片
-				 //   size_t file_size = CCommon::GetFileSize(dir + image_file);
-				 //   if (max_file_size < file_size)
-				 //   {
-					//    max_file_size = file_size;
-					//    max_size_file_name = image_file;
-				 //   }
-			  //  }
-			  //  return dir + max_size_file_name;
-		   // }
-	    //}
+    }
+
+    //没有找到封面时查找osu目录下Data\bg里面的图片，并随机选择一张作为封面
+    if (!CCommon::FileExist(dir + album_cover_file_name))
+    {
+        static std::map<wstring, wstring> bg_map;       //每次为一首没有封面的文件随机选择一张封面后保存起来，下次则直接返回上次获取的封面
+        auto iter = bg_map.find(file_path);
+        if (iter != bg_map.end())
+        {
+            return iter->second;
+        }
+        else
+        {
+            wstring songs_dir = path_helper.GetParentDir();
+            wstring osu_dir = CFilePathHelper(songs_dir).GetParentDir();
+            wstring bg_dir = osu_dir + L"Data\\bg\\";
+            std::vector<wstring> bg_files;
+            CCommon::GetImageFiles(bg_dir + L"*.*", bg_files);
+            if (!bg_files.empty())
+            {
+                wstring cover_path;
+                //有多个图片时随机选择一张
+                if (bg_files.size() > 1)
+                {
+                    SYSTEMTIME current_time;
+                    GetLocalTime(&current_time);			//获取当前时间
+                    srand(current_time.wMilliseconds);		//用当前时间的毫秒数设置产生随机数的种子
+                    int index = rand() % static_cast<int>(bg_files.size());
+                    cover_path = bg_dir + bg_files[index];
+                }
+                else
+                {
+                    cover_path = bg_dir + bg_files[0];
+                }
+                bg_map[file_path] = cover_path;
+                return cover_path;
+            }
+        }
     }
 
     if (album_cover_file_name.empty())
@@ -181,7 +200,7 @@ COSUFile::COSUFile(const wchar_t * file_path)
     if (ext != L"osu")
         return;
 
-    CCommon::GetFileContent(file_path, m_data, false);
+    CCommon::GetFileContent(file_path, m_data);
     if (m_data.empty())
         return;
 
@@ -190,7 +209,7 @@ COSUFile::COSUFile(const wchar_t * file_path)
     GetTag("[Events]", m_events_seg);
 }
 
-wstring COSUFile::GetAudioFile()
+wstring COSUFile::GetAudioFileName()
 {
     return GetTagItem("AudioFilename:", m_general_seg);
 }
